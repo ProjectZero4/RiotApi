@@ -3,10 +3,9 @@
 
 namespace ProjectZero4\RiotApi\Models;
 
-//{"id":"wKORKdoMFxbFB5zKtazU8oq_YxcoUgHOJ7-ilYhUSfnUwX8","accountId":"wVcRIGt8pPp73YquSNGWUG7vOE7C8zsPjIckuJKRkRHySy8",
-//"puuid":"J0do9pRUjhtkVHF3JyrCW7wSgDwMyJKPr9XKibvEN1Gsp3fMrz0x3QU4QBEv2Mhl5xXNekNfg0a2Qg","name":"Project Zero",
-//"profileIconId":780,"revisionDate":1627939176000,"summonerLevel":397}
 use Illuminate\Database\Eloquent\Model;
+use JetBrains\PhpStorm\Pure;
+use function ProjectZero4\RiotApi\iconPath;
 
 /**
  * Class Summoner
@@ -48,5 +47,10 @@ class Summoner extends Model
     public static function convertSummonerNameToKey(string $summonerName): string
     {
         return strtolower(str_replace([' ', '+'], '', urldecode($summonerName)));
+    }
+
+    #[Pure] public function iconUrl(): string
+    {
+        return iconPath("profile/{$this->profileIconId}.png");
     }
 }

@@ -11,7 +11,7 @@ class Summoner extends Endpoint
 
     const ENDPOINT = 'lol/summoner/{version}/summoners';
 
-    protected int $cacheTime = 3600;
+    protected int $cacheTime = 120;
 
     public function byAccountId(string $accountId): SummonerModel
     {

@@ -4,7 +4,7 @@
 namespace ProjectZero4\RiotApi\Models;
 
 
-use App\packages\ProjectZero4\RiotApi\Models\Champion;
+use ProjectZero4\RiotApi\Models\Champion;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 

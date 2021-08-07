@@ -1,12 +1,11 @@
 <?php
 
 
-namespace App\packages\ProjectZero4\RiotApi\Models;
+namespace ProjectZero4\RiotApi\Models;
 
 
 use Illuminate\Database\Eloquent\Model;
 use JetBrains\PhpStorm\Pure;
-use ProjectZero4\RiotApi\Models\Cacheable;
 use function ProjectZero4\RiotApi\championPath;
 
 /**

@@ -4,7 +4,7 @@
 namespace App\packages\ProjectZero4\RiotApi\Commands;
 
 
-use App\packages\ProjectZero4\RiotApi\Models\Champion;
+use ProjectZero4\RiotApi\Models\Champion;
 use Illuminate\Console\Command;
 use ProjectZero4\RiotApi\RiotApi;
 

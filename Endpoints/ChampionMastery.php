@@ -5,6 +5,7 @@ namespace ProjectZero4\RiotApi\Endpoints;
 
 
 use Illuminate\Support\Collection;
+use ProjectZero4\RiotApi\Models\Champion;
 use ProjectZero4\RiotApi\Models\ChampionMastery as ChampionMasteryModel;
 use ProjectZero4\RiotApi\Models\Summoner;
 
@@ -16,29 +17,50 @@ class ChampionMastery extends Endpoint
 
     protected int $cacheTime = 300;
 
-    public function bySummoner(Summoner $summoner)
+    /**
+     * @param Summoner $summoner
+     * @return ChampionMasteryModel[]|Collection
+     */
+    public function bySummoner(Summoner $summoner): array|Collection
     {
         $masteries = $summoner->masteries;
-        $renewCache = false;
-        if ($masteries->isEmpty()) {
-            $renewCache = true;
-        }
-        foreach ($masteries as $championMastery) {
-            if ($championMastery->isOutdated($this->cacheTime)) {
-                $renewCache = true;
-                break;
-            }
-        }
-        if (!$renewCache) {
+        if (!$this->isOutdated($masteries)) {
             return $masteries;
         }
         $response = $this->sendRequest($this->buildUrl("champion-masteries/by-summoner/{$summoner->id}"));
         return $this->buildMasteriesFromResponse($response, $summoner);
     }
 
-    public function bySummonerByChampion(Summoner $summoner, Champion $champion)
+    /**
+     * @param Summoner $summoner
+     * @param Champion $champion
+     * @return ChampionMasteryModel
+     */
+    public function bySummonerByChampion(Summoner $summoner, Champion $champion): ChampionMasteryModel
     {
+        /**
+         * @var ChampionMasteryModel $championMastery
+         */
+        $championMastery = $summoner->masteries()->where('championId', $champion->key)->firstOrNew();
+        if($championMastery->isOutdated()) {
+            $response = $this->sendRequest($this->buildUrl("champion-masteries/by-summoner/{$summoner->id}/by-champion/{$champion->key}"));
+            $championMastery->fill($response);
+            $championMastery->save();
+        }
+        return $championMastery;
+    }
 
+    /**
+     * @param Summoner $summoner
+     * @return int
+     */
+    public function scoreBySummoner(Summoner $summoner): int
+    {
+        $masteries = $summoner->masteries;
+        if($this->isOutdated($masteries)) {
+            $masteries = $this->bySummoner($summoner);
+        }
+        return $masteries->sum('championLevel');
     }
 
     /**
@@ -58,5 +80,20 @@ class ChampionMastery extends Endpoint
             $championMasteries->add($championMastery);
         }
         return $championMasteries;
+    }
+
+    protected function isOutdated(Collection $championMasteries): bool
+    {
+        $renewCache = false;
+        if ($championMasteries->isEmpty()) {
+            $renewCache = true;
+        }
+        foreach ($championMasteries as $championMastery) {
+            if ($championMastery->isOutdated($this->cacheTime)) {
+                $renewCache = true;
+                break;
+            }
+        }
+        return $renewCache;
     }
 }

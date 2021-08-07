@@ -4,11 +4,13 @@
 namespace ProjectZero4\RiotApi;
 
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use JetBrains\PhpStorm\ArrayShape;
 use ProjectZero4\RiotApi\Endpoints\ChampionMastery;
 use ProjectZero4\RiotApi\Endpoints\Endpoint;
 use ProjectZero4\RiotApi\Endpoints\Summoner;
+use ProjectZero4\RiotApi\Models\Champion;
 
 /**
  * Class RiotApi
@@ -69,9 +71,28 @@ class RiotApi
      * =================== CHAMPION MASTERY ENDPOINTS ===================
      */
 
-    public function masteryBySummoner(Models\Summoner $summoner)
+    /**
+     * @param Models\Summoner $summoner
+     * @return ChampionMastery[]|Collection
+     */
+    public function masteryBySummoner(Models\Summoner $summoner): array|Collection
     {
         return $this->mastery->bySummoner($summoner);
+    }
+
+    /**
+     * @param Models\Summoner $summoner
+     * @param Champion $champion
+     * @return Models\ChampionMastery
+     */
+    public function masteryBySummonerByChampion(Models\Summoner $summoner, Champion $champion): Models\ChampionMastery
+    {
+        return $this->mastery->bySummonerByChampion($summoner,$champion);
+    }
+
+    public function masteryScoreBySummoner(Models\Summoner $summoner): int
+    {
+        return $this->mastery->scoreBySummoner($summoner);
     }
 
 

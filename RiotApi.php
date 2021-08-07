@@ -6,6 +6,8 @@ namespace ProjectZero4\RiotApi;
 
 use Illuminate\Support\Facades\Cache;
 use JetBrains\PhpStorm\ArrayShape;
+use ProjectZero4\RiotApi\Endpoints\ChampionMastery;
+use ProjectZero4\RiotApi\Endpoints\Endpoint;
 use ProjectZero4\RiotApi\Endpoints\Summoner;
 
 /**
@@ -25,12 +27,18 @@ class RiotApi
     protected Summoner $summoner;
 
     /**
+     * @var ChampionMastery
+     */
+    protected ChampionMastery $mastery;
+
+    /**
      * RiotApi constructor.
      */
     public function __construct(string $region)
     {
         $this->client = new Client();
         $this->summoner = new Summoner($this->client, $region);
+        $this->mastery = new ChampionMastery($this->client, $region);
     }
 
     /**
@@ -61,9 +69,9 @@ class RiotApi
      * =================== CHAMPION MASTERY ENDPOINTS ===================
      */
 
-    public function masteryBySummoner(Summoner $summoner)
+    public function masteryBySummoner(Models\Summoner $summoner)
     {
-        $this->mastery->bySummoner();
+        return $this->mastery->bySummoner($summoner);
     }
 
 

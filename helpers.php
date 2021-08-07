@@ -30,3 +30,11 @@ use JetBrains\PhpStorm\Pure;
 {
     return imagesPath("icons/{$path}");
 }
+/**
+ * @param string $path
+ * @return string
+ */
+#[Pure] function championPath(string $path = ""): string
+{
+    return imagesPath("champion/{$path}");
+}

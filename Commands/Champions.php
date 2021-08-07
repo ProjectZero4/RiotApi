@@ -41,28 +41,29 @@ class Champions extends Command
     {
         $new = 0;
         $updated = 0;
-
         $champions = $api->getChampions()['data'];
-
         $bar = $this->output->createProgressBar(count($champions));
-
         $bar->start();
 
         foreach ($champions as $champion) {
-            $champion = $api->getChampion($champion['id']);
+            $champion = $api->getChampion($champion['id'])['data'];
+            foreach($champion = reset($champion) as $key => $value) {
+                if(is_array($value)) {
+                    $champion[$key] = json_encode($value);
+                }
+            }
             $championModel = Champion::firstOrNew(['id' => $champion['id']]);
-            $championModel->fill($champion);
-            $championModel->save();
             if(!$championModel->exists) {
                 $new++;
             } else {
                 $updated++;
             }
+            $championModel->fill($champion);
+            $championModel->save();
             $bar->advance();
         }
 
         $bar->finish();
-
-        $this->info("{$new} champion(s) have been added and {$updated} champion(s) have been updated!");
+        $this->info("\n{$new} champion(s) have been added and {$updated} champion(s) have been updated!");
     }
 }

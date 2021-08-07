@@ -15,13 +15,21 @@ class CreateChampionsTable extends Migration
     {
         Schema::create('champions', function (Blueprint $table) {
             $table->id("internalKey");
-            $table->string("id");
-            $table->integer("key");
-            $table->string("name");
+            $table->string("id")->index();
+            $table->integer("key")->index();
+            $table->string("name")->index();
             $table->string("title");
             $table->json("image");
             $table->json("skins");
             $table->text("lore");
+            $table->text("blurb");
+            $table->json("allytips");
+            $table->json("enemytips");
+            $table->string("partype")->index();
+            $table->json("info");
+            $table->json("stats");
+            $table->json("spells");
+            $table->json("passive");
             $table->timestamps();
         });
     }

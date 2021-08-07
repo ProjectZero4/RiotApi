@@ -3,7 +3,9 @@
 
 namespace ProjectZero4\RiotApi\Models;
 
+use App\packages\ProjectZero4\RiotApi\Models\Champion;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use JetBrains\PhpStorm\Pure;
 use function ProjectZero4\RiotApi\iconPath;
 
@@ -19,12 +21,15 @@ use function ProjectZero4\RiotApi\iconPath;
  * @property int revisionDate
  * @property int summonerLevel
  * @property string nameKey
+ * @property ChampionMastery[]|Collection masteries
  */
 class Summoner extends Model
 {
     use Cacheable;
 
     protected $table = "summoners";
+
+    protected $primaryKey = "internalKey";
 
     protected $fillable = [
         'id',
@@ -52,5 +57,10 @@ class Summoner extends Model
     #[Pure] public function iconUrl(): string
     {
         return iconPath("profile/{$this->profileIconId}.png");
+    }
+
+    public function masteries()
+    {
+        return $this->hasMany(ChampionMastery::class, 'summonerId', 'id');
     }
 }

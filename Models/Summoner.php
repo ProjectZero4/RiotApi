@@ -40,6 +40,7 @@ class Summoner extends Model
         'revisionDate',
         'summonerLevel',
     ];
+    protected $primaryKey = "internalKey";
 
     public static function boot()
     {

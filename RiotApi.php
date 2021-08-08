@@ -4,13 +4,13 @@
 namespace ProjectZero4\RiotApi;
 
 
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use JetBrains\PhpStorm\ArrayShape;
 use ProjectZero4\RiotApi\Endpoints\ChampionMastery;
 use ProjectZero4\RiotApi\Endpoints\Endpoint;
 use ProjectZero4\RiotApi\Endpoints\Summoner;
 use ProjectZero4\RiotApi\Models\Champion;
+use ProjectZero4\RiotApi\Models\League;
 
 /**
  * Class RiotApi
@@ -27,6 +27,7 @@ class RiotApi
      * @var Summoner
      */
     protected Summoner $summoner;
+    protected \ProjectZero4\RiotApi\Endpoints\League $league;
 
     /**
      * @var ChampionMastery
@@ -41,6 +42,8 @@ class RiotApi
         $this->client = new Client();
         $this->summoner = new Summoner($this->client, $region);
         $this->mastery = new ChampionMastery($this->client, $region);
+        $this->league = new \ProjectZero4\RiotApi\Endpoints\League($this->client, $region);
+        $this->league = new \ProjectZero4\RiotApi\Endpoints\League($this->client, $region);
     }
 
     /**
@@ -86,6 +89,11 @@ class RiotApi
      * @return Models\ChampionMastery
      */
     public function masteryBySummonerByChampion(Models\Summoner $summoner, Champion $champion): Models\ChampionMastery
+    public function leagueBySummoner(\ProjectZero4\RiotApi\Models\Summoner $summoner)
+    {
+        return $this->league->bySummoner($summoner);
+    }
+    public function masteryBySummoner(Summoner $summoner)
     {
         return $this->mastery->bySummonerByChampion($summoner,$champion);
     }

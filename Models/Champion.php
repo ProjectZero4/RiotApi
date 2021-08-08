@@ -45,15 +45,15 @@ class Champion extends Model
 
     #[Pure] public function loadingUrl(int $skinId = 0): string
     {
-        return championPath("loading/{$this->id}_{$skinId}.png");
+        return championPath("loading/{$this->id}_{$skinId}.jpg");
     }
     #[Pure] public function splashUrl(int $skinId = 0): string
     {
-        return championPath("splash/{$this->id}_{$skinId}.png");
+        return championPath("splash/{$this->id}_{$skinId}.jpg");
     }
     #[Pure] public function tileUrl(int $skinId = 0): string
     {
-        return championPath("tile/{$this->id}_{$skinId}.png");
+        return championPath("tile/{$this->id}_{$skinId}.jpg");
     }
 
 

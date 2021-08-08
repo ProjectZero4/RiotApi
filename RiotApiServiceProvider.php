@@ -23,7 +23,7 @@ class RiotApiServiceProvider extends ServiceProvider
             return new RiotApi('euw1');
         });
         $this->publishes([
-            __DIR__ . "/public" => riotApiRoot(),
+            __DIR__ . "/public" => public_path(riotApiRoot()),
         ], 'public');
     }
 }

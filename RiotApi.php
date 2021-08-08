@@ -89,11 +89,6 @@ class RiotApi
      * @return Models\ChampionMastery
      */
     public function masteryBySummonerByChampion(Models\Summoner $summoner, Champion $champion): Models\ChampionMastery
-    public function leagueBySummoner(\ProjectZero4\RiotApi\Models\Summoner $summoner)
-    {
-        return $this->league->bySummoner($summoner);
-    }
-    public function masteryBySummoner(Summoner $summoner)
     {
         return $this->mastery->bySummonerByChampion($summoner,$champion);
     }
@@ -103,6 +98,10 @@ class RiotApi
         return $this->mastery->scoreBySummoner($summoner);
     }
 
+    public function leagueBySummoner(\ProjectZero4\RiotApi\Models\Summoner $summoner)
+    {
+        return $this->league->bySummoner($summoner);
+    }
 
     /**
      *  =================== OTHER FUNCTIONS ===================

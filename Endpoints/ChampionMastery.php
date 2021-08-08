@@ -82,18 +82,4 @@ class ChampionMastery extends Endpoint
         return $championMasteries;
     }
 
-    protected function isOutdated(Collection $championMasteries): bool
-    {
-        $renewCache = false;
-        if ($championMasteries->isEmpty()) {
-            $renewCache = true;
-        }
-        foreach ($championMasteries as $championMastery) {
-            if ($championMastery->isOutdated($this->cacheTime)) {
-                $renewCache = true;
-                break;
-            }
-        }
-        return $renewCache;
-    }
 }

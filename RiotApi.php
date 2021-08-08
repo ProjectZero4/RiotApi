@@ -4,6 +4,7 @@
 namespace ProjectZero4\RiotApi;
 
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use JetBrains\PhpStorm\ArrayShape;
 use ProjectZero4\RiotApi\Endpoints\ChampionMastery;
@@ -42,7 +43,6 @@ class RiotApi
         $this->client = new Client();
         $this->summoner = new Summoner($this->client, $region);
         $this->mastery = new ChampionMastery($this->client, $region);
-        $this->league = new \ProjectZero4\RiotApi\Endpoints\League($this->client, $region);
         $this->league = new \ProjectZero4\RiotApi\Endpoints\League($this->client, $region);
     }
 
@@ -98,7 +98,7 @@ class RiotApi
         return $this->mastery->scoreBySummoner($summoner);
     }
 
-    public function leagueBySummoner(\ProjectZero4\RiotApi\Models\Summoner $summoner)
+    public function leagueBySummoner(\ProjectZero4\RiotApi\Models\Summoner $summoner): array|Collection
     {
         return $this->league->bySummoner($summoner);
     }

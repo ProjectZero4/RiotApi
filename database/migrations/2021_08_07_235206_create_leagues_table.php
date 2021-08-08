@@ -19,7 +19,8 @@ class CreateLeaguesTable extends Migration
             $table->string('queueType')->index();
             $table->string('tier')->index();
             $table->string('rank')->index();
-            $table->string('summonerId')->references('id')->on('summoners');
+            $table->string('summonerId');
+            $table->foreign('summonerId')->references('id')->on('summoners')->onDelete('cascade');
             $table->string('summonerName');
             $table->integer('leaguePoints');
             $table->integer('wins');

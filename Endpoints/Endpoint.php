@@ -4,6 +4,7 @@
 namespace ProjectZero4\RiotApi\Endpoints;
 
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use ProjectZero4\RiotApi\Client;
 use Psr\Http\Message\ResponseInterface;
@@ -17,6 +18,8 @@ abstract class Endpoint
     protected Client $client;
 
     protected string $version;
+
+    protected int $cacheTime = 300;
 
     public function __construct(Client $client, string $region)
     {
@@ -86,5 +89,20 @@ abstract class Endpoint
     public function setVersion(string $version)
     {
         $this->version = $version;
+    }
+
+    protected function isOutdated(Collection $collection): bool
+    {
+        $renewCache = false;
+        if ($collection->isEmpty()) {
+            $renewCache = true;
+        }
+        foreach ($collection as $cacheable) {
+            if ($cacheable->isOutdated($this->cacheTime)) {
+                $renewCache = true;
+                break;
+            }
+        }
+        return $renewCache;
     }
 }

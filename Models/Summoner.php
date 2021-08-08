@@ -22,6 +22,7 @@ use function ProjectZero4\RiotApi\iconPath;
  * @property int summonerLevel
  * @property string nameKey
  * @property ChampionMastery[]|Collection masteries
+ * @property League[]|Collection leagues
  */
 class Summoner extends Model
 {
@@ -62,5 +63,10 @@ class Summoner extends Model
     public function masteries()
     {
         return $this->hasMany(ChampionMastery::class, 'summonerId', 'id');
+    }
+
+    public function leagues()
+    {
+        return $this->hasMany(League::class, 'summonerId', 'id');
     }
 }

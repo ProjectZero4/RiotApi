@@ -4,6 +4,7 @@
 namespace ProjectZero4\RiotApi\Models;
 
 
+use App\packages\ProjectZero4\RiotApi\Models\Base;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use JetBrains\PhpStorm\Pure;
@@ -30,7 +31,7 @@ use function ProjectZero4\RiotApi\iconPath;
  * @property boolean hotStreak
  * @property-read string queueName
  */
-class League extends Model
+class League extends Base
 {
     use Cacheable;
 

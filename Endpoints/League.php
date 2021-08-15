@@ -4,26 +4,33 @@
 namespace ProjectZero4\RiotApi\Endpoints;
 
 
-use JetBrains\PhpStorm\Pure;
-use ProjectZero4\RiotApi\Models\ChampionMastery as ChampionMasteryModel;
 use ProjectZero4\RiotApi\Models\Summoner;
 use ProjectZero4\RiotApi\Models\Summoner as SummonerModel;
 use ProjectZero4\RiotApi\Models\League as LeagueModel;
-use Illuminate\Database\Eloquent\Collection;
-use function ProjectZero4\RiotApi\iconPath;
 
+/**
+ * Class League
+ * @package ProjectZero4\RiotApi\Endpoints
+ */
 class League extends Endpoint
 {
+    /**
+     * @var string
+     */
     const CURRENT_VERSION = 'v4';
-
+    /**
+     * @var string
+     */
     const ENDPOINT = 'lol/league/{version}';
-
+    /**
+     * @var int
+     */
     protected int $cacheTime = 120;
 
     public function bySummoner(SummonerModel $summoner)
     {
         $leagues = $summoner->leagues;
-        if (!$this->isOutdated($leagues)) {
+        if (!$leagues->isOutdated()) {
             return $leagues;
         }
         $response =  $this->sendRequest($this->buildUrl("entries/by-summoner/{$summoner->id}"));

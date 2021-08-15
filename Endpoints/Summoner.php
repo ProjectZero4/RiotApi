@@ -5,62 +5,61 @@ namespace ProjectZero4\RiotApi\Endpoints;
 
 use ProjectZero4\RiotApi\Models\Summoner as SummonerModel;
 
+/**
+ * Class Summoner
+ * @package ProjectZero4\RiotApi\Endpoints
+ */
 class Summoner extends Endpoint
 {
+    /**
+     * @var string
+     */
     const CURRENT_VERSION = 'v4';
 
+    /**
+     * @var string
+     */
     const ENDPOINT = 'lol/summoner/{version}/summoners';
 
+    /**
+     * @var int
+     */
     protected int $cacheTime = 120;
 
-    public function byAccountId(string $accountId): SummonerModel
+    /**
+     * @param string $accountId
+     * @return array{id: string, accountId: string, puuid: string, name: string, profileIconId: int, revisionDate: int, summonerLevel: int}
+     */
+    public function byAccountId(string $accountId): array
     {
-        $summonerModel = $this->getModelFromCache("accountId", $accountId);
-        if(!$summonerModel->isOutdated($this->cacheTime)) {
-            return $summonerModel;
-        }
-        $response = $this->sendRequest($this->buildUrl("by-account/{$accountId}"));
-        $summonerModel->fill($response)->save();
-        return $summonerModel;
+        return $this->sendRequest($this->buildUrl("by-account/{$accountId}"));
     }
 
-    public function bySummonerName(string $summonerName): SummonerModel
+    /**
+     * @param string $summonerName
+     * @return array{id: string, accountId: string, puuid: string, name: string, profileIconId: int, revisionDate: int, summonerLevel: int}
+     */
+    public function bySummonerName(string $summonerName): array
     {
         $nameKey = SummonerModel::convertSummonerNameToKey($summonerName);
-        $summonerModel = $this->getModelFromCache("nameKey", $nameKey);
-        if(!$summonerModel->isOutdated($this->cacheTime)) {
-            return $summonerModel;
-        }
-        $response = $this->sendRequest($this->buildUrl("by-name/{$nameKey}"));
-        $summonerModel->fill($response)->save();
-        return $summonerModel;
+        return $this->sendRequest($this->buildUrl("by-name/{$nameKey}"));
     }
 
-    public function byPuuid(string $puuid): SummonerModel
+    /**
+     * @param string $puuid
+     * @return array{id: string, accountId: string, puuid: string, name: string, profileIconId: int, revisionDate: int, summonerLevel: int}
+     */
+    public function byPuuid(string $puuid): array
     {
-        $summonerModel = $this->getModelFromCache("puuid", $puuid);
-        if(!$summonerModel->isOutdated($this->cacheTime)) {
-            return $summonerModel;
-        }
-        $response = $this->sendRequest($this->buildUrl("by-puuid/{$puuid}"));
-        $summonerModel->fill($response)->save();
-        return $summonerModel;
+        return $this->sendRequest($this->buildUrl("by-puuid/{$puuid}"));
     }
 
-    public function bySummonerId(string $summonerId): SummonerModel
+    /**
+     * @param string $summonerId
+     * @return array{id: string, accountId: string, puuid: string, name: string, profileIconId: int, revisionDate: int, summonerLevel: int}
+     */
+    public function bySummonerId(string $summonerId): array
     {
-        $summonerModel = $this->getModelFromCache("id", $summonerId);
-        if(!$summonerModel->isOutdated($this->cacheTime)) {
-            return $summonerModel;
-        }
-        $response = $this->sendRequest($this->buildUrl($summonerId));
-        $summonerModel->fill($response)->save();
-        return $summonerModel;
+        return $this->sendRequest($this->buildUrl($summonerId));
     }
-
-    private function getModelFromCache(string $column, string $value): SummonerModel
-    {
-        return SummonerModel::firstOrNew([$column => $value]);
-    }
-
 }

@@ -4,18 +4,23 @@
 namespace ProjectZero4\RiotApi;
 
 
+use App\packages\ProjectZero4\RiotApi\RiotApiCollection;
+use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use JetBrains\PhpStorm\ArrayShape;
 use ProjectZero4\RiotApi\Endpoints\ChampionMastery;
 use ProjectZero4\RiotApi\Endpoints\Endpoint;
+use ProjectZero4\RiotApi\Endpoints\League;
 use ProjectZero4\RiotApi\Endpoints\Summoner;
 use ProjectZero4\RiotApi\Models\Champion;
-use ProjectZero4\RiotApi\Models\League;
 
 /**
  * Class RiotApi
  * @package ProjectZero4\RiotApi
+ * @property-read Summoner $summoner
+ * @property-read ChampionMastery $mastery
+ * @property-read League $league
  */
 class RiotApi
 {
@@ -25,15 +30,24 @@ class RiotApi
     protected Client $client;
 
     /**
+     * @var string
+     */
+    protected string $region;
+
+    /**
      * @var Summoner
      */
-    protected Summoner $summoner;
-    protected \ProjectZero4\RiotApi\Endpoints\League $league;
+    protected Summoner $_summoner;
+
+    /**
+     * @var Endpoints\League
+     */
+    protected Endpoints\League $_league;
 
     /**
      * @var ChampionMastery
      */
-    protected ChampionMastery $mastery;
+    protected ChampionMastery $_mastery;
 
     /**
      * RiotApi constructor.
@@ -41,33 +55,106 @@ class RiotApi
     public function __construct(string $region)
     {
         $this->client = new Client();
-        $this->summoner = new Summoner($this->client, $region);
-        $this->mastery = new ChampionMastery($this->client, $region);
-        $this->league = new \ProjectZero4\RiotApi\Endpoints\League($this->client, $region);
+        $this->region = $region;
+    }
+
+    /**
+     * @param string $endpoint
+     * @return Endpoint
+     * @throws Exception
+     */
+    protected function endpoint(string $endpoint): Endpoint
+    {
+        $realEndpoint = "_{$endpoint}";
+        if(isset($this->$realEndpoint)) {
+            return $this->$realEndpoint;
+        }
+
+        return match ($endpoint) {
+            'summoner' => $this->_summoner = new Summoner($this->client, $this->region),
+            'mastery' => $this->_mastery = new ChampionMastery($this->client, $this->region),
+            'league' => $this->_league = new League($this->client, $this->region),
+            default => throw new Exception("{$endpoint} is not currently supported or is invalid!"),
+        };
+    }
+
+    /**
+     * @param string $name
+     * @return Endpoint
+     * @throws Exception
+     */
+    public function __get(string $name)
+    {
+        if(property_exists($this, "_{$name}")) {
+            return $this->endpoint($name);
+        }
+        throw new Exception("{$name} does not exist!");
     }
 
     /**
      * =================== SUMMONER ENDPOINTS ===================
      */
 
-    public function summonerByAccountId(string $accountId)
+    /**
+     * @param string $accountId
+     * @return Models\Summoner
+     */
+    public function summonerByAccountId(string $accountId): Models\Summoner
     {
-        return $this->summoner->byAccountId($accountId);
+        $summonerModel = Models\Summoner::firstOrNew(["accountId" => $accountId]);
+        if(!$summonerModel->isOutdated()) {
+            return $summonerModel;
+        }
+        $response = $this->summoner->byAccountId($accountId);
+
+        $summonerModel->fill($response)->save();
+        return $summonerModel;
     }
 
-    public function summonerBySummonerName(string $summonerName)
+    /**
+     * @param string $summonerName
+     * @return Models\Summoner
+     */
+    public function summonerBySummonerName(string $summonerName): Models\Summoner
     {
-        return $this->summoner->bySummonerName($summonerName);
+        $nameKey = Models\Summoner::convertSummonerNameToKey($summonerName);
+        $summonerModel = Models\Summoner::firstOrNew(["nameKey" => $nameKey]);
+        if(!$summonerModel->isOutdated()) {
+            return $summonerModel;
+        }
+        $response = $this->summoner->bySummonerName($summonerName);
+        $summonerModel->fill($response)->save();
+        return $summonerModel;
     }
 
-    public function summonerByPuuid(string $puuid)
+    /**
+     * @param string $puuid
+     * @return Models\Summoner
+     */
+    public function summonerByPuuid(string $puuid): Models\Summoner
     {
-        return $this->summoner->byPuuid($puuid);
+        $summonerModel = Models\Summoner::firstOrNew(["puuid" => $puuid]);
+        if(!$summonerModel->isOutdated()) {
+            return $summonerModel;
+        }
+        $response = $this->summoner->byPuuid($puuid);
+        $summonerModel->fill($response)->save();
+        return $summonerModel;
     }
 
-    public function summonerBySummonerId(string $summonerId)
+    /**
+     * @param string $summonerId
+     * @return Models\Summoner
+     */
+    public function summonerBySummonerId(string $summonerId): Models\Summoner
     {
-        return $this->summoner->bySummonerId($summonerId);
+        $summonerModel = Models\Summoner::firstOrNew(["id" => $summonerId]);
+        if(!$summonerModel->isOutdated()) {
+            return $summonerModel;
+        }
+        $response = $this->summoner->bySummonerId($summonerId);
+        $summonerModel->fill($response)->save();
+        return $summonerModel;
     }
 
     /**
@@ -76,11 +163,25 @@ class RiotApi
 
     /**
      * @param Models\Summoner $summoner
-     * @return ChampionMastery[]|Collection
+     * @return RiotApiCollection<ChampionMastery>
      */
-    public function masteryBySummoner(Models\Summoner $summoner): array|Collection
+    public function masteryBySummoner(Models\Summoner $summoner): RiotApiCollection
     {
-        return $this->mastery->bySummoner($summoner);
+        $masteries = $summoner->masteries;
+        if (!$masteries->isOutdated()) {
+            return $masteries;
+        }
+        $response = $this->mastery->bySummoner($summoner);
+        $championMasteries = new RiotApiCollection;
+        foreach($response as $masteryData) {
+            $championMastery = Models\ChampionMastery::where('championId', $masteryData['championId'])
+                ->where('summonerId', $summoner->id)
+                ->firstOrNew();
+            $championMastery->fill($masteryData);
+            $championMastery->save();
+            $championMasteries->add($championMastery);
+        }
+        return $championMasteries;
     }
 
     /**
@@ -98,7 +199,7 @@ class RiotApi
         return $this->mastery->scoreBySummoner($summoner);
     }
 
-    public function leagueBySummoner(\ProjectZero4\RiotApi\Models\Summoner $summoner): array|Collection
+    public function leagueBySummoner(Models\Summoner $summoner): array|Collection
     {
         return $this->league->bySummoner($summoner);
     }
@@ -125,6 +226,12 @@ class RiotApi
             Cache::add("lol-champion-{$championId}", $champions, 3600);
         }
         return $champions;
+    }
+
+    public function getChampionByName(string $championName): Champion
+    {
+        $championKey = Champion::convertNameToKey($championName);
+        return Champion::whereKey($championKey)->first();
     }
 
     public function getPatches()

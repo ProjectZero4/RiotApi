@@ -3,8 +3,8 @@
 
 namespace ProjectZero4\RiotApi\Models;
 
-use ProjectZero4\RiotApi\Models\Champion;
-use Illuminate\Database\Eloquent\Model;
+use App\packages\ProjectZero4\RiotApi\Models\Base;
+use App\packages\ProjectZero4\RiotApi\RiotApiCollection;
 use Illuminate\Support\Collection;
 use JetBrains\PhpStorm\Pure;
 use function ProjectZero4\RiotApi\iconPath;
@@ -21,10 +21,10 @@ use function ProjectZero4\RiotApi\iconPath;
  * @property int revisionDate
  * @property int summonerLevel
  * @property string nameKey
- * @property ChampionMastery[]|Collection masteries
- * @property League[]|Collection leagues
+ * @property RiotApiCollection<ChampionMastery> masteries
+ * @property RiotApiCollection<League> leagues
  */
-class Summoner extends Model
+class Summoner extends Base
 {
     use Cacheable;
 
@@ -41,6 +41,8 @@ class Summoner extends Model
         'revisionDate',
         'summonerLevel',
     ];
+
+    public static int $cacheTime = 120;
 
     public static function boot()
     {

@@ -19,16 +19,11 @@ class ChampionMastery extends Endpoint
 
     /**
      * @param Summoner $summoner
-     * @return ChampionMasteryModel[]|Collection
+     * @return array{0: array{}}
      */
-    public function bySummoner(Summoner $summoner): array|Collection
+    public function bySummoner(Summoner $summoner): array
     {
-        $masteries = $summoner->masteries;
-        if (!$this->isOutdated($masteries)) {
-            return $masteries;
-        }
-        $response = $this->sendRequest($this->buildUrl("champion-masteries/by-summoner/{$summoner->id}"));
-        return $this->buildMasteriesFromResponse($response, $summoner);
+        return $this->sendRequest($this->buildUrl("champion-masteries/by-summoner/{$summoner->id}"));
     }
 
     /**
@@ -57,7 +52,7 @@ class ChampionMastery extends Endpoint
     public function scoreBySummoner(Summoner $summoner): int
     {
         $masteries = $summoner->masteries;
-        if($this->isOutdated($masteries)) {
+        if($masteries->isOutdated()) {
             $masteries = $this->bySummoner($summoner);
         }
         return $masteries->sum('championLevel');

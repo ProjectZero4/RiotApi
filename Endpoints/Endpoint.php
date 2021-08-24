@@ -91,18 +91,5 @@ abstract class Endpoint
         $this->version = $version;
     }
 
-    protected function isOutdated(Collection $collection): bool
-    {
-        $renewCache = false;
-        if ($collection->isEmpty()) {
-            $renewCache = true;
-        }
-        foreach ($collection as $cacheable) {
-            if ($cacheable->isOutdated($this->cacheTime)) {
-                $renewCache = true;
-                break;
-            }
-        }
-        return $renewCache;
-    }
+
 }

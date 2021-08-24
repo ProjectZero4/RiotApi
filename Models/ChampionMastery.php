@@ -4,7 +4,8 @@
 namespace ProjectZero4\RiotApi\Models;
 
 
-use ProjectZero4\RiotApi\Models\Champion;
+use App\packages\ProjectZero4\RiotApi\Models\Base;
+use App\packages\ProjectZero4\RiotApi\RiotApiCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -21,7 +22,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int tokensEarned
  * @property string summonerId
  */
-class ChampionMastery extends Model
+class ChampionMastery extends Base
 {
     use Cacheable;
 

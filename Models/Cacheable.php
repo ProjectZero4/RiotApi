@@ -22,7 +22,10 @@ trait Cacheable
             return true;
         }
         if($cacheTime === 0) {
-            return false;
+            $cacheTime = static::$cacheTime ?? 0;
+            if($cacheTime === 0) {
+                return false;
+            }
         }
         return $this->updated_at->addSeconds($cacheTime)->isPast();
     }

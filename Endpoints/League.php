@@ -33,6 +33,7 @@ class League extends Endpoint
     /**
      * @param array $response
      * @param SummonerModel $summoner
+     * @return \Illuminate\Support\Collection
      */
     protected function buildLeaguesFromResponse(array $response, Summoner $summoner)
     {

@@ -81,4 +81,9 @@ class League extends Model
         return iconPath("tier/{$tier}_{$rank}.png");
     }
 
+    #[Pure] public function getUnrankedIcon(): string
+    {
+        return iconPath("tier/provisional.png");
+    }
+
 }

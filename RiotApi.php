@@ -4,6 +4,7 @@
 namespace ProjectZero4\RiotApi;
 
 
+use App\packages\ProjectZero4\RiotApi\Endpoints\Status;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use JetBrains\PhpStorm\ArrayShape;
@@ -12,6 +13,7 @@ use ProjectZero4\RiotApi\Endpoints\Endpoint;
 use ProjectZero4\RiotApi\Endpoints\Summoner;
 use ProjectZero4\RiotApi\Models\Champion;
 use ProjectZero4\RiotApi\Models\League;
+use function PHPUnit\Framework\isEmpty;
 
 /**
  * Class RiotApi
@@ -44,6 +46,7 @@ class RiotApi
         $this->summoner = new Summoner($this->client, $region);
         $this->mastery = new ChampionMastery($this->client, $region);
         $this->league = new \ProjectZero4\RiotApi\Endpoints\League($this->client, $region);
+        $this->status = new Status($this->client, $region);
     }
 
     /**
@@ -144,6 +147,17 @@ class RiotApi
         return last($patches);
     }
 
+    public function getStatus()
+    {
+       $status = $this->status->getStatus();
+       if (isEmpty($status)){
+           return 'online';
+       }
+        return $status['maintenance_status'];
+    }
 
+    public function getIncidents()
+    {
 
+    }
 }

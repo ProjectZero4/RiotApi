@@ -71,7 +71,7 @@ abstract class Endpoint
 
     }
 
-    protected function buildUrl(string $url, ?string $version = null): string
+    protected function buildUrl(string $url = null, ?string $version = null): string
     {
         $version = $version ?? $this->version;
         return str_replace('{region}', $this->region, static::BASE_URL . DIRECTORY_SEPARATOR . str_replace('{version}', $version, static::ENDPOINT)) . DIRECTORY_SEPARATOR . $url;

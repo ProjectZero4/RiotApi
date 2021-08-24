@@ -73,7 +73,7 @@ class RiotApi
     protected function endpoint(string $endpoint): Endpoint
     {
         $realEndpoint = "_{$endpoint}";
-        if(isset($this->$realEndpoint)) {
+        if (isset($this->$realEndpoint)) {
             return $this->$realEndpoint;
         }
 
@@ -92,7 +92,7 @@ class RiotApi
      */
     public function __get(string $name)
     {
-        if(property_exists($this, "_{$name}")) {
+        if (property_exists($this, "_{$name}")) {
             return $this->endpoint($name);
         }
         throw new Exception("{$name} does not exist!");
@@ -109,7 +109,7 @@ class RiotApi
     public function summonerByAccountId(string $accountId): Models\Summoner
     {
         $summonerModel = Models\Summoner::firstOrNew(["accountId" => $accountId]);
-        if(!$summonerModel->isOutdated()) {
+        if (!$summonerModel->isOutdated()) {
             return $summonerModel;
         }
         $response = $this->summoner->byAccountId($accountId);
@@ -126,7 +126,7 @@ class RiotApi
     {
         $nameKey = Models\Summoner::convertSummonerNameToKey($summonerName);
         $summonerModel = Models\Summoner::firstOrNew(["nameKey" => $nameKey]);
-        if(!$summonerModel->isOutdated()) {
+        if (!$summonerModel->isOutdated()) {
             return $summonerModel;
         }
         $response = $this->summoner->bySummonerName($summonerName);
@@ -141,7 +141,7 @@ class RiotApi
     public function summonerByPuuid(string $puuid): Models\Summoner
     {
         $summonerModel = Models\Summoner::firstOrNew(["puuid" => $puuid]);
-        if(!$summonerModel->isOutdated()) {
+        if (!$summonerModel->isOutdated()) {
             return $summonerModel;
         }
         $response = $this->summoner->byPuuid($puuid);
@@ -156,7 +156,7 @@ class RiotApi
     public function summonerBySummonerId(string $summonerId): Models\Summoner
     {
         $summonerModel = Models\Summoner::firstOrNew(["id" => $summonerId]);
-        if(!$summonerModel->isOutdated()) {
+        if (!$summonerModel->isOutdated()) {
             return $summonerModel;
         }
         $response = $this->summoner->bySummonerId($summonerId);
@@ -180,7 +180,7 @@ class RiotApi
         }
         $response = $this->mastery->bySummoner($summoner);
         $championMasteries = new RiotApiCollection;
-        foreach($response as $masteryData) {
+        foreach ($response as $masteryData) {
             $championMastery = Models\ChampionMastery::where('championId', $masteryData['championId'])
                 ->where('summonerId', $summoner->id)
                 ->firstOrNew();
@@ -198,7 +198,7 @@ class RiotApi
      */
     public function masteryBySummonerByChampion(Models\Summoner $summoner, Champion $champion): Models\ChampionMastery
     {
-        return $this->mastery->bySummonerByChampion($summoner,$champion);
+        return $this->mastery->bySummonerByChampion($summoner, $champion);
     }
 
     public function masteryScoreBySummoner(Models\Summoner $summoner): int
@@ -218,7 +218,7 @@ class RiotApi
     public function getChampions()
     {
         $champions = Cache::get('lol-champions');
-        if(!$champions) {
+        if (!$champions) {
             $champions = json_decode($this->client->get("https://ddragon.leagueoflegends.com/cdn/{$this->getCurrentPatch()['name']}.1/data/en_GB/champion.json")->getBody()->getContents(), true);
             Cache::add('lol-champions', $champions, 3600);
         }
@@ -228,7 +228,7 @@ class RiotApi
     public function getChampion(string $championId)
     {
         $champions = Cache::get("lol-champion-{$championId}");
-        if(!$champions) {
+        if (!$champions) {
             $champions = json_decode($this->client->get("https://ddragon.leagueoflegends.com/cdn/{$this->getCurrentPatch()['name']}.1/data/en_GB/champion/{$championId}.json")->getBody()->getContents(), true);
             Cache::add("lol-champion-{$championId}", $champions, 3600);
         }
@@ -244,7 +244,7 @@ class RiotApi
     public function getPatches()
     {
         $versions = Cache::get('lol-patches');
-        if(!$versions) {
+        if (!$versions) {
             $versions = json_decode($this->client->get("https://raw.githubusercontent.com/CommunityDragon/Data/master/patches.json")->getBody()->getContents(), true);
             Cache::add('lol-patches', $versions, 3600);
         }
@@ -260,10 +260,10 @@ class RiotApi
 
     public function getStatus()
     {
-       $status = $this->status->getStatus();
-       if (isEmpty($status)){
-           return 'online';
-       }
+        $status = $this->status->getStatus();
+        if (isEmpty($status)) {
+            return 'online';
+        }
         return $status['maintenance_status'];
     }
 

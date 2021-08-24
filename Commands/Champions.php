@@ -47,13 +47,13 @@ class Champions extends Command
 
         foreach ($champions as $champion) {
             $champion = $api->getChampion($champion['id'])['data'];
-            foreach($champion = reset($champion) as $key => $value) {
-                if(is_array($value)) {
+            foreach ($champion = reset($champion) as $key => $value) {
+                if (is_array($value)) {
                     $champion[$key] = json_encode($value);
                 }
             }
             $championModel = Champion::firstOrNew(['id' => $champion['id']]);
-            if(!$championModel->exists) {
+            if (!$championModel->exists) {
                 $new++;
             } else {
                 $updated++;

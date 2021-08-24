@@ -37,7 +37,7 @@ class ChampionMastery extends Endpoint
          * @var ChampionMasteryModel $championMastery
          */
         $championMastery = $summoner->masteries()->where('championId', $champion->key)->firstOrNew();
-        if($championMastery->isOutdated()) {
+        if ($championMastery->isOutdated()) {
             $response = $this->sendRequest($this->buildUrl("champion-masteries/by-summoner/{$summoner->id}/by-champion/{$champion->key}"));
             $championMastery->fill($response);
             $championMastery->save();
@@ -52,7 +52,7 @@ class ChampionMastery extends Endpoint
     public function scoreBySummoner(Summoner $summoner): int
     {
         $masteries = $summoner->masteries;
-        if($masteries->isOutdated()) {
+        if ($masteries->isOutdated()) {
             $masteries = $this->bySummoner($summoner);
         }
         return $masteries->sum('championLevel');
@@ -66,7 +66,7 @@ class ChampionMastery extends Endpoint
     protected function buildMasteriesFromResponse(array $response, Summoner $summoner): Collection
     {
         $championMasteries = collect();
-        foreach($response as $masteryData) {
+        foreach ($response as $masteryData) {
             $championMastery = ChampionMasteryModel::where('championId', $masteryData['championId'])
                 ->where('summonerId', $summoner->id)
                 ->firstOrNew();

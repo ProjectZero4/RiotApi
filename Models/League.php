@@ -73,9 +73,9 @@ class League extends Base
 
     #[Pure] public function tierIconUrl($tier, $rank): string
     {
-        if (empty($rank)){
+        if (empty($rank)) {
             return iconPath("tier/{$tier}.png");
-        } elseif (empty($tier)){
+        } elseif (empty($tier)) {
             return iconPath("tier/provisional.png");
         }
 

@@ -25,7 +25,7 @@ abstract class Endpoint
     {
         $this->client = $client;
         $this->region = $region;
-        if(defined(static::class . "::CURRENT_VERSION")) {
+        if (defined(static::class . "::CURRENT_VERSION")) {
             $this->version = static::CURRENT_VERSION;
         }
     }

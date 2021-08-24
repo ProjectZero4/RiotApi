@@ -18,12 +18,12 @@ trait Cacheable
      */
     public function isOutdated(int $cacheTime = 0): bool
     {
-        if(!$this->exists) {
+        if (!$this->exists) {
             return true;
         }
-        if($cacheTime === 0) {
+        if ($cacheTime === 0) {
             $cacheTime = static::$cacheTime ?? 0;
-            if($cacheTime === 0) {
+            if ($cacheTime === 0) {
                 return false;
             }
         }

@@ -33,7 +33,7 @@ class League extends Endpoint
         if (!$leagues->isOutdated()) {
             return $leagues;
         }
-        $response =  $this->sendRequest($this->buildUrl("entries/by-summoner/{$summoner->id}"));
+        $response = $this->sendRequest($this->buildUrl("entries/by-summoner/{$summoner->id}"));
         return $this->buildLeaguesFromResponse($response, $summoner);
     }
 
@@ -45,7 +45,7 @@ class League extends Endpoint
     protected function buildLeaguesFromResponse(array $response, Summoner $summoner)
     {
         $leagues = collect();
-        foreach($response as $leagueData) {
+        foreach ($response as $leagueData) {
             $summonerLeague = LeagueModel::where('queueType', $leagueData['queueType'])
                 ->where('summonerId', $summoner->id)
                 ->firstOrNew();

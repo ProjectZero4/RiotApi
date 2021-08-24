@@ -15,7 +15,7 @@ use ProjectZero4\RiotApi\Endpoints\Endpoint;
 use ProjectZero4\RiotApi\Endpoints\League;
 use ProjectZero4\RiotApi\Endpoints\Summoner;
 use ProjectZero4\RiotApi\Models\Champion;
-use ProjectZero4\RiotApi\Models\League;
+use ProjectZero4\RiotApi\Models\League as LeagueModel;
 use function PHPUnit\Framework\isEmpty;
 
 /**

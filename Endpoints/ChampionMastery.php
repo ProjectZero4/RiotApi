@@ -53,7 +53,7 @@ class ChampionMastery extends Endpoint
     {
         $masteries = $summoner->masteries;
         if ($masteries->isOutdated()) {
-            $masteries = $this->bySummoner($summoner);
+            $masteries = collect($this->bySummoner($summoner));
         }
         return $masteries->sum('championLevel');
     }

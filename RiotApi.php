@@ -4,6 +4,7 @@
 namespace ProjectZero4\RiotApi;
 
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use ProjectZero4\RiotApi\Models\Game\Participant;
 use ProjectZero4\RiotApi\Models\Game\RunePage;
@@ -238,40 +239,9 @@ class RiotApi
         return $this->game->listBySummoner($summoner, $query);
     }
 
-    public function gameById(string $gameId): Models\Game\Game
+    public function rawGameById(string $gameId): array
     {
-        /**
-         * @var Models\Game\Game $game
-         */
-        $game = Models\Game\Game::where('gameId', $gameId)->first();
-        if($game && !$game->isOutdated()) {
-            return $game;
-        }
-        $data = $this->game->byGameId($gameId);
-        $info = $data['info'];
-        $gameData = array_merge($info, [
-            'matchId' => $data['metadata']['matchId'],
-        ]);
-        $game = new Models\Game\Game($gameData);
-        $game->save();
-        $participantTeams = collect($info['participants'])->groupBy('teamId');
-        $participants = new RiotApiCollection();
-        foreach ($info['teams'] as $team) {
-            $teamModel = new Team($team);
-            $game->teams()->save($teamModel);
-            foreach ($participantTeams->get($team['teamId']) as $participant) {
-                $participantModel = new Participant($participant);
-                $participantModel->game_id = $teamModel->game_id;
-                $teamModel->participants()->save($participantModel);
-                $runePage = new RunePage($participant['perks']);
-                $participantModel->runePage()->save($runePage);
-                $participants->add($participantModel);
-            }
-        }
-
-        $game->participants()->saveMany($participants);
-
-        return $game;
+        return $this->game->byGameId($gameId);
     }
 
 
@@ -283,7 +253,8 @@ class RiotApi
     {
         $champions = Cache::get('lol-champions');
         if (!$champions) {
-            $champions = json_decode($this->client->get("https://ddragon.leagueoflegends.com/cdn/{$this->getCurrentPatch()['name']}.1/data/en_GB/champion.json")->getBody()->getContents(), true);
+            $champions = json_decode($this->client->get("https://ddragon.leagueoflegends.com/cdn/{$this->getCurrentPatch()['name']}.1/data/en_GB/champion.json")->getBody()->getContents(),
+                true);
             Cache::add('lol-champions', $champions, 3600);
         }
         return $champions;
@@ -293,7 +264,8 @@ class RiotApi
     {
         $champions = Cache::get("lol-champion-{$championId}");
         if (!$champions) {
-            $champions = json_decode($this->client->get("https://ddragon.leagueoflegends.com/cdn/{$this->getCurrentPatch()['name']}.1/data/en_GB/champion/{$championId}.json")->getBody()->getContents(), true);
+            $champions = json_decode($this->client->get("https://ddragon.leagueoflegends.com/cdn/{$this->getCurrentPatch()['name']}.1/data/en_GB/champion/{$championId}.json")->getBody()->getContents(),
+                true);
             Cache::add("lol-champion-{$championId}", $champions, 3600);
         }
         return $champions;
@@ -309,7 +281,8 @@ class RiotApi
     {
         $versions = Cache::get('lol-patches');
         if (!$versions) {
-            $versions = json_decode($this->client->get("https://raw.githubusercontent.com/CommunityDragon/Data/master/patches.json")->getBody()->getContents(), true);
+            $versions = json_decode($this->client->get("https://raw.githubusercontent.com/CommunityDragon/Data/master/patches.json")->getBody()->getContents(),
+                true);
             Cache::add('lol-patches', $versions, 3600);
         }
         return $versions;
@@ -334,5 +307,43 @@ class RiotApi
     public function getIncidents()
     {
 
+    }
+
+    public function splitSeasonByWeeks(?int $season = null): array
+    {
+        $season = $season ?? (int)$this->getCurrentPatch()['season'];
+
+        $patches = $this->getPatches();
+        $startTime = 0;
+        $endTime = 0;
+        foreach ($patches['patches'] as $key => $patch) {
+            if ($patch['season'] === $season) {
+                if ($startTime === 0) {
+                    $startTime = $patch['start'];
+                }
+            }
+
+            if ($patch['season'] === ($season + 1)) {
+                $endTime = $patch['start'];
+                break;
+            }
+        }
+        if ($endTime === 0) {
+            $endTime = Carbon::now()->timestamp;
+        }
+
+        $start = Carbon::createFromTimestamp($startTime);
+        $end = Carbon::createFromTimestamp($endTime);
+        $current = $start->clone();
+        $weeks = [];
+        while ($current->lt($end)) {
+            $weeks[] = [
+                'start' => $current->setTime(0,0)->format('Y-m-d H:i:s'),
+                'end' => $current->endOfWeek()->format('Y-m-d H:i:s'),
+            ];
+            $current = $current->endOfWeek()->nextWeekDay()->clone();
+        }
+
+        return $weeks;
     }
 }

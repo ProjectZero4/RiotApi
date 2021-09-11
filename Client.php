@@ -33,12 +33,15 @@ class Client
 
     /**
      * @param string $uri
+     * @param array $query
      * @return ResponseInterface
      * @throws GuzzleException
      */
-    public function get(string $uri): ResponseInterface
+    public function get(string $uri, array $query = []): ResponseInterface
     {
-        return $this->client->get($uri);
+        return $this->client->get($uri, [
+            'query' => $query,
+        ]);
     }
 
     /**

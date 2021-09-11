@@ -4,8 +4,8 @@
 namespace ProjectZero4\RiotApi\Models;
 
 
-use App\packages\ProjectZero4\RiotApi\Models\Base;
-use App\packages\ProjectZero4\RiotApi\RiotApiCollection;
+use ProjectZero4\RiotApi\Models\Base;
+use ProjectZero4\RiotApi\RiotApiCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 

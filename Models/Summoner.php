@@ -3,8 +3,8 @@
 
 namespace ProjectZero4\RiotApi\Models;
 
-use App\packages\ProjectZero4\RiotApi\Models\Base;
-use App\packages\ProjectZero4\RiotApi\RiotApiCollection;
+use ProjectZero4\RiotApi\Models\Base;
+use ProjectZero4\RiotApi\RiotApiCollection;
 use Illuminate\Support\Collection;
 use JetBrains\PhpStorm\Pure;
 use function ProjectZero4\RiotApi\iconPath;

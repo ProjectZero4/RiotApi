@@ -4,8 +4,6 @@
 namespace ProjectZero4\RiotApi\Models;
 
 
-use App\packages\ProjectZero4\RiotApi\Models\Base;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use JetBrains\PhpStorm\Pure;
 use function ProjectZero4\RiotApi\iconPath;

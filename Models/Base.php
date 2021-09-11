@@ -1,8 +1,8 @@
 <?php
 
-namespace App\packages\ProjectZero4\RiotApi\Models;
+namespace ProjectZero4\RiotApi\Models;
 
-use App\packages\ProjectZero4\RiotApi\RiotApiCollection;
+use ProjectZero4\RiotApi\RiotApiCollection;
 use Illuminate\Database\Eloquent\Model;
 
 /**

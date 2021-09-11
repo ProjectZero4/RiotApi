@@ -4,14 +4,19 @@
 namespace ProjectZero4\RiotApi;
 
 
-use App\packages\ProjectZero4\RiotApi\RiotApiCollection;
+use Illuminate\Database\Eloquent\Model;
+use ProjectZero4\RiotApi\Models\Game\Participant;
+use ProjectZero4\RiotApi\Models\Game\RunePage;
+use ProjectZero4\RiotApi\Models\Game\Team;
+use ProjectZero4\RiotApi\RiotApiCollection;
 use Exception;
-use App\packages\ProjectZero4\RiotApi\Endpoints\Status;
+use ProjectZero4\RiotApi\Endpoints\Status;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use JetBrains\PhpStorm\ArrayShape;
 use ProjectZero4\RiotApi\Endpoints\ChampionMastery;
 use ProjectZero4\RiotApi\Endpoints\Endpoint;
+use ProjectZero4\RiotApi\Endpoints\Game;
 use ProjectZero4\RiotApi\Endpoints\League;
 use ProjectZero4\RiotApi\Endpoints\Summoner;
 use ProjectZero4\RiotApi\Models\Champion;
@@ -24,6 +29,7 @@ use function PHPUnit\Framework\isEmpty;
  * @property-read Summoner $summoner
  * @property-read ChampionMastery $mastery
  * @property-read League $league
+ * @property-read Game $game
  */
 class RiotApi
 {
@@ -51,6 +57,11 @@ class RiotApi
      * @var ChampionMastery
      */
     protected ChampionMastery $_mastery;
+
+    /**
+     * @var Game
+     */
+    protected Game $_game;
 
     /**
      * RiotApi constructor.
@@ -81,6 +92,7 @@ class RiotApi
             'summoner' => $this->_summoner = new Summoner($this->client, $this->region),
             'mastery' => $this->_mastery = new ChampionMastery($this->client, $this->region),
             'league' => $this->_league = new League($this->client, $this->region),
+            'game' => $this->_game = new Game($this->client, $this->region),
             default => throw new Exception("{$endpoint} is not currently supported or is invalid!"),
         };
     }
@@ -210,6 +222,58 @@ class RiotApi
     {
         return $this->league->bySummoner($summoner);
     }
+
+    /**
+     * =================== GAME (Match) ENDPOINTS ===================
+     */
+
+
+    /**
+     * @param Models\Summoner $summoner
+     * @param array{startTime: int, endTime: int, queue: int, type: string, start: int, count: int} $query
+     * @return array
+     */
+    public function listGamesBySummoner(Models\Summoner $summoner, array $query = []): array
+    {
+        return $this->game->listBySummoner($summoner, $query);
+    }
+
+    public function gameById(string $gameId): Models\Game\Game
+    {
+        /**
+         * @var Models\Game\Game $game
+         */
+        $game = Models\Game\Game::where('gameId', $gameId)->first();
+        if($game && !$game->isOutdated()) {
+            return $game;
+        }
+        $data = $this->game->byGameId($gameId);
+        $info = $data['info'];
+        $gameData = array_merge($info, [
+            'matchId' => $data['metadata']['matchId'],
+        ]);
+        $game = new Models\Game\Game($gameData);
+        $game->save();
+        $participantTeams = collect($info['participants'])->groupBy('teamId');
+        $participants = new RiotApiCollection();
+        foreach ($info['teams'] as $team) {
+            $teamModel = new Team($team);
+            $game->teams()->save($teamModel);
+            foreach ($participantTeams->get($team['teamId']) as $participant) {
+                $participantModel = new Participant($participant);
+                $participantModel->game_id = $teamModel->game_id;
+                $teamModel->participants()->save($participantModel);
+                $runePage = new RunePage($participant['perks']);
+                $participantModel->runePage()->save($runePage);
+                $participants->add($participantModel);
+            }
+        }
+
+        $game->participants()->saveMany($participants);
+
+        return $game;
+    }
+
 
     /**
      *  =================== OTHER FUNCTIONS ===================

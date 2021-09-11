@@ -1,7 +1,7 @@
 <?php
 
 
-namespace App\packages\ProjectZero4\RiotApi\Commands;
+namespace ProjectZero4\RiotApi\Commands;
 
 
 use ProjectZero4\RiotApi\Models\Champion;

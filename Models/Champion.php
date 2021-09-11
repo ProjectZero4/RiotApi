@@ -10,7 +10,7 @@ use function ProjectZero4\RiotApi\championPath;
 
 /**
  * Class Champion
- * @package App\packages\ProjectZero4\RiotApi\Models
+ * @package ProjectZero4\RiotApi\Models
  * @property-read int internalKey
  * @property string id
  * @property int key

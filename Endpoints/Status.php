@@ -1,6 +1,6 @@
 <?php
 
-namespace App\packages\ProjectZero4\RiotApi\Endpoints;
+namespace ProjectZero4\RiotApi\Endpoints;
 
 
 use ProjectZero4\RiotApi\Endpoints\Endpoint;

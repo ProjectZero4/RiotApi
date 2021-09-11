@@ -31,12 +31,12 @@ abstract class Endpoint
     }
 
 
-    protected function sendRequest(string $url): array
+    protected function sendRequest(string $url, array $query = []): array
     {
 //        if(!$this->canMakeRequest($url)) {
 //            throw new \Exception("Rate Limit Exceeded", 413);
 //        }
-        $response = $this->client->get($url);
+        $response = $this->client->get($url, $query);
         return json_decode($response->getBody()->getContents(), true);
 //        [$shortAppLimit, $longAppLimit] = explode(',', $response->getHeader('X-App-Rate-Limit')[0]);
 //        [$shortMethodLimit, $longMethodLimit] = explode(',', $response->getHeader('X-Method-Rate-Limit')[0]);
@@ -74,7 +74,7 @@ abstract class Endpoint
     protected function buildUrl(string $url = null, ?string $version = null): string
     {
         $version = $version ?? $this->version;
-        return str_replace('{region}', $this->region, static::BASE_URL . DIRECTORY_SEPARATOR . str_replace('{version}', $version, static::ENDPOINT)) . DIRECTORY_SEPARATOR . $url;
+        return str_replace('{region}', $this->getRegion(), static::BASE_URL . DIRECTORY_SEPARATOR . str_replace('{version}', $version, static::ENDPOINT)) . DIRECTORY_SEPARATOR . $url;
     }
 
     protected function getCacheTime(): int
@@ -91,5 +91,9 @@ abstract class Endpoint
         $this->version = $version;
     }
 
+    protected function getRegion(): string
+    {
+        return $this->region;
+    }
 
 }

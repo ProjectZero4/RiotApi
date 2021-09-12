@@ -66,7 +66,6 @@ use ProjectZero4\RiotApi\RiotApiCollection;
  * @property int objectivesStolenAssists
  * @property int participantId
  * @property int pentaKills
- * @property RiotApiCollection perks
  * @property int physicalDamageDealt
  * @property int physicalDamageDealtToChampions
  * @property int physicalDamageTaken
@@ -117,6 +116,7 @@ use ProjectZero4\RiotApi\RiotApiCollection;
  * @property bool win
  * @property int game_id
  *
+ * @property-read RiotApiCollection perks
  * @property-read RunePage runePage
  * @property-read Team team
  */

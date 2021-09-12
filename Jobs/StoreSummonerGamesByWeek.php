@@ -48,8 +48,9 @@ class StoreSummonerGamesByWeek implements ShouldQueue
 
         $jobs = [];
         foreach ($api->listGamesBySummoner($this->summoner, [
-            'start' => Carbon::parse($this->start)->timestamp,
-            'end' => Carbon::parse($this->end)->timestamp,
+            'startTime' => Carbon::parse($this->start)->timestamp,
+            'endTime' => Carbon::parse($this->end)->timestamp,
+            'count' => 100,
         ]) as $gameId) {
             $jobs[] = new StoreGame($gameId);
         }

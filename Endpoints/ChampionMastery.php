@@ -61,7 +61,7 @@ class ChampionMastery extends Endpoint
     /**
      * @param array $response
      * @param Summoner $summoner
-     * @return Collection|ChampionMasteryModel[]
+     * @return Collection<ChampionMasteryModel>
      */
     protected function buildMasteriesFromResponse(array $response, Summoner $summoner): Collection
     {

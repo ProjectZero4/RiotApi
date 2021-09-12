@@ -40,6 +40,11 @@ class StoreGame implements ShouldQueue
         if ($this->batch()->canceled()) {
             return;
         }
+
+        if (Models\Game\Game::where('gameId', $this->gameId)->first()) {
+            return;
+        }
+
         DB::transaction(function () use ($api) {
             $data = $api->rawGameById($this->gameId);
             $info = $data['info'];

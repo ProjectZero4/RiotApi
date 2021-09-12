@@ -2,12 +2,13 @@
 
 namespace ProjectZero4\RiotApi\Models;
 
+use Illuminate\Database\Query\Builder;
 use ProjectZero4\RiotApi\RiotApiCollection;
 use Illuminate\Database\Eloquent\Model;
 
 /**
  * @method static static firstOrNew(array $array = [])
- * @method static static where(string $column, string $operator, string $value = "")
+ * @method static Builder where(string $column, string $operator, string $value = "")
  */
 abstract class Base extends Model
 {

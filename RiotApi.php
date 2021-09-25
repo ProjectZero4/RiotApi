@@ -348,22 +348,24 @@ class RiotApi
         return str_starts_with($patch, $season);
     }
 
-    public function splitSeasonByWeeks(?int $season = null): array
+    public function getMaps(): array
     {
-        $season = $season ?? $this->getCurrentSeason();
-        $times = $this->getSeasonTimes($season);
-        $start = $times['start'];
-        $end = $times['end'];
-        $current = $start->clone();
-        $weeks = [];
-        while ($current->lt($end)) {
-            $weeks[] = [
-                'start' => $current->setTime(0,0)->format('Y-m-d H:i:s'),
-                'end' => $current->endOfWeek()->format('Y-m-d H:i:s'),
-            ];
-            $current = $current->endOfWeek()->nextWeekDay()->clone();
+        $maps = Cache::get('lol-maps');
+        if (!$maps) {
+            $maps = json_decode($this->client->get("https://static.developer.riotgames.com/docs/lol/maps.json")->getBody()->getContents(),
+                true);
+            Cache::add('lol-maps', $maps, 3600);
         }
-
-        return $weeks;
+        return $maps;
+    }
+    public function getQueues(): array
+    {
+        $queues = Cache::get('lol-queues');
+        if (!$queues) {
+            $queues = json_decode($this->client->get("https://static.developer.riotgames.com/docs/lol/queues.json")->getBody()->getContents(),
+                true);
+            Cache::add('lol-queues', $queues, 3600);
+        }
+        return $queues;
     }
 }

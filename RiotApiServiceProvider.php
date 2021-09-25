@@ -15,6 +15,8 @@ class RiotApiServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 Commands\Champions::class,
+                Commands\Maps::class,
+                Commands\Queues::class,
             ]);
         }
 

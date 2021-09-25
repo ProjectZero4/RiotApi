@@ -3,9 +3,8 @@
 
 namespace ProjectZero4\RiotApi\Models\Game;
 
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
-use ProjectZero4\RiotApi\Models\Base;
-use ProjectZero4\RiotApi\Models;
 use ProjectZero4\RiotApi\RiotApiCollection;
 
 /**
@@ -13,6 +12,7 @@ use ProjectZero4\RiotApi\RiotApiCollection;
  * @package ProjectZero4\RiotApi\Models\Game
  *
  * @property int teamId
+ * @property int game_id
  * @property bool win
  * @property string ban_1
  * @property string ban_2
@@ -83,7 +83,7 @@ class Team extends GameBase
         return $converted;
     }
 
-    public function participants()
+    public function participants(): HasMany
     {
         return $this->hasMany(Participant::class);
     }

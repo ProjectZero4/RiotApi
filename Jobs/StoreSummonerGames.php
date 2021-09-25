@@ -2,16 +2,15 @@
 
 namespace ProjectZero4\RiotApi\Jobs;
 
+use Carbon\Carbon;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\DB;
 use ProjectZero4\RiotApi\Models;
 use ProjectZero4\RiotApi\RiotApi;
-use ProjectZero4\RiotApi\RiotApiCollection;
 
 class StoreSummonerGames implements ShouldQueue
 {
@@ -43,8 +42,20 @@ class StoreSummonerGames implements ShouldQueue
             return;
         }
         $jobs = [];
-        foreach ($api->splitSeasonByWeeks($this->season) as $week) {
-            $jobs[] = new StoreSummonerGamesByWeek($this->summoner, $week['start'], $week['end']);
+        $seasonTimes = $api->getSeasonTimes($this->season);
+        $offset = 0;
+        $count = 100;
+        while ($gameIds = $api->listGamesBySummoner($this->summoner, [
+            'startTime' => Carbon::parse($seasonTimes['start'])->timestamp,
+            'endTime' => Carbon::parse($seasonTimes['end'])->timestamp,
+            'count' => $count,
+            'start' => $offset,
+        ])) {
+            foreach ($gameIds as $gameId) {
+                $jobs[] = new StoreGame($gameId);
+            }
+
+            $offset += $count;
         }
         $this->batch()->add($jobs);
     }

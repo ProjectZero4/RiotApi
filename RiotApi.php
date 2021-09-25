@@ -5,12 +5,8 @@ namespace ProjectZero4\RiotApi;
 
 
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
-use ProjectZero4\RiotApi\Models\Game\Participant;
-use ProjectZero4\RiotApi\Models\Game\RunePage;
-use ProjectZero4\RiotApi\Models\Game\Team;
-use ProjectZero4\RiotApi\RiotApiCollection;
 use Exception;
+use Illuminate\Support\Facades\Log;
 use ProjectZero4\RiotApi\Endpoints\Status;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -21,7 +17,6 @@ use ProjectZero4\RiotApi\Endpoints\Game;
 use ProjectZero4\RiotApi\Endpoints\League;
 use ProjectZero4\RiotApi\Endpoints\Summoner;
 use ProjectZero4\RiotApi\Models\Champion;
-use ProjectZero4\RiotApi\Models\League as LeagueModel;
 use function PHPUnit\Framework\isEmpty;
 
 /**
@@ -31,6 +26,7 @@ use function PHPUnit\Framework\isEmpty;
  * @property-read ChampionMastery $mastery
  * @property-read League $league
  * @property-read Game $game
+ * @property-read Status $status
  */
 class RiotApi
 {
@@ -72,7 +68,7 @@ class RiotApi
         $this->client = new Client();
         $this->summoner = new Summoner($this->client, $region);
         $this->mastery = new ChampionMastery($this->client, $region);
-        $this->league = new \ProjectZero4\RiotApi\Endpoints\League($this->client, $region);
+        $this->league = new League($this->client, $region);
         $this->status = new Status($this->client, $region);
         $this->region = $region;
     }
@@ -84,7 +80,7 @@ class RiotApi
      */
     protected function endpoint(string $endpoint): Endpoint
     {
-        $realEndpoint = "_{$endpoint}";
+        $realEndpoint = "_$endpoint";
         if (isset($this->$realEndpoint)) {
             return $this->$realEndpoint;
         }
@@ -94,7 +90,7 @@ class RiotApi
             'mastery' => $this->_mastery = new ChampionMastery($this->client, $this->region),
             'league' => $this->_league = new League($this->client, $this->region),
             'game' => $this->_game = new Game($this->client, $this->region),
-            default => throw new Exception("{$endpoint} is not currently supported or is invalid!"),
+            default => throw new Exception("$endpoint is not currently supported or is invalid!"),
         };
     }
 
@@ -105,10 +101,10 @@ class RiotApi
      */
     public function __get(string $name)
     {
-        if (property_exists($this, "_{$name}")) {
+        if (property_exists($this, "_$name")) {
             return $this->endpoint($name);
         }
-        throw new Exception("{$name} does not exist!");
+        throw new Exception("$name does not exist!");
     }
 
     /**
@@ -236,6 +232,7 @@ class RiotApi
      */
     public function listGamesBySummoner(Models\Summoner $summoner, array $query = []): array
     {
+        Log::info(print_r($query, true));
         return $this->game->listBySummoner($summoner, $query);
     }
 
@@ -304,26 +301,32 @@ class RiotApi
         return $status['maintenance_status'];
     }
 
-    public function getIncidents()
+    public function getCurrentSeason(): int
     {
-
+        $currentPatch = $this->getCurrentPatch()['name'];
+        [$season] = explode('.', $currentPatch);
+        return $season;
     }
 
-    public function splitSeasonByWeeks(?int $season = null): array
+    /**
+     * @param int|null $season
+     * @return array
+     */
+    #[ArrayShape(['start' => "\Carbon\Carbon", 'end' => "\Carbon\Carbon"])]
+    public function getSeasonTimes(?int $season = null): array
     {
-        $season = $season ?? (int)$this->getCurrentPatch()['season'];
-
+        $season = $season ?? $this->getCurrentSeason();
         $patches = $this->getPatches();
         $startTime = 0;
         $endTime = 0;
-        foreach ($patches['patches'] as $key => $patch) {
-            if ($patch['season'] === $season) {
+        foreach ($patches['patches'] as $patch) {
+            if ($this->patchIsPartOfSeason($patch['name'], $season)) {
                 if ($startTime === 0) {
                     $startTime = $patch['start'];
                 }
             }
 
-            if ($patch['season'] === ($season + 1)) {
+            if ($this->patchIsPartOfSeason($patch['name'], $season + 1)) {
                 $endTime = $patch['start'];
                 break;
             }
@@ -334,6 +337,23 @@ class RiotApi
 
         $start = Carbon::createFromTimestamp($startTime);
         $end = Carbon::createFromTimestamp($endTime);
+        return [
+            'start' => $start,
+            'end' => $end,
+        ];
+    }
+
+    public function patchIsPartOfSeason(string $patch, int $season): bool
+    {
+        return str_starts_with($patch, $season);
+    }
+
+    public function splitSeasonByWeeks(?int $season = null): array
+    {
+        $season = $season ?? $this->getCurrentSeason();
+        $times = $this->getSeasonTimes($season);
+        $start = $times['start'];
+        $end = $times['end'];
         $current = $start->clone();
         $weeks = [];
         while ($current->lt($end)) {

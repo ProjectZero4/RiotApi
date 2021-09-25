@@ -4,14 +4,15 @@
 namespace ProjectZero4\RiotApi\Endpoints;
 
 
-use Illuminate\Support\Collection;
+use Exception;
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Cache;
 use ProjectZero4\RiotApi\Client;
-use Psr\Http\Message\ResponseInterface;
 
 abstract class Endpoint
 {
     const BASE_URL = "https://{region}.api.riotgames.com";
+    const ENDPOINT = "/";
 
     protected string $region;
 
@@ -20,6 +21,8 @@ abstract class Endpoint
     protected string $version;
 
     protected int $cacheTime = 300;
+
+    private int $waitTime = 0;
 
     public function __construct(Client $client, string $region)
     {
@@ -30,45 +33,108 @@ abstract class Endpoint
         }
     }
 
-
-    protected function sendRequest(string $url, array $query = []): array
+    /**
+     * @param string $url
+     * @param array $query
+     * @param int $depth
+     * @return array
+     * @throws GuzzleException|Exception
+     */
+    protected function sendRequest(string $url, array $query = [], $depth = 0): array
     {
-//        if(!$this->canMakeRequest($url)) {
-//            throw new \Exception("Rate Limit Exceeded", 413);
-//        }
+        if (!$this->canMakeRequest()) {
+            if ($depth === env("RIOT_GAMES_API_DEPTH_LIMIT", 5)) {
+                throw new Exception("Recursion depth ($depth) exceeded for Endpoint " . static::class);
+            }
+            sleep($this->waitTime);
+            return $this->sendRequest($url, $query, ++$depth);
+        }
+
         $response = $this->client->get($url, $query);
-        return json_decode($response->getBody()->getContents(), true);
-//        [$shortAppLimit, $longAppLimit] = explode(',', $response->getHeader('X-App-Rate-Limit')[0]);
-//        [$shortMethodLimit, $longMethodLimit] = explode(',', $response->getHeader('X-Method-Rate-Limit')[0]);
-//        [$shortAppCurrent, $longAppCurrent] = explode(',', $response->getHeader('X-App-Rate-Limit-Count')[0]);
-//        [$shortMethodCurrent, $longMethodCurrent] = explode(',', $response->getHeader('X-Method-Rate-Limit-Count')[0]);
-//
-//        Cache::add("rateLimit." . static::class, [
-//            'app' => [
-//                'current' => [
-//                    'short' => $shortAppCurrent,
-//                    'long' => $longAppCurrent,
-//                ],
-//                'max' => [
-//                    'short' => $shortAppLimit,
-//                    'long' => $longAppLimit,
-//                ],
-//            ],
-//            'method' => [
-//                'current' => [
-//                    'short' => $shortMethodLimit,
-//                    'long' => $longMethodLimit,
-//                ],
-//                'max' => [
-//                    'short' => $shortMethodCurrent,
-//                    'long' => $longMethodCurrent,
-//                ],
-//            ],
-//        ]);
+        $this->storeRateLimits($response->getHeaders());
+        $body = $response->getBody()->getContents();
+        return json_decode($body, true);
+    }
 
+    protected function storeRateLimits(array $headers)
+    {
+        $limits = [];
+        $rateLimitHeaders = [
+            "x-app-rate-limit",
+            "x-app-rate-limit-count",
+            "x-method-rate-limit",
+            "x-method-rate-limit-count",
+        ];
 
-        dd($response->getBody()->getContents(), $response->getHeaders());
+        $typeRegex = "/^x-(\w+)-rate.*-(\w+)$/";
+        foreach ($headers as $headerName => $header) {
+            $headerName = strtolower($headerName);
+            if (!in_array($headerName, $rateLimitHeaders)) {
+                continue;
+            }
 
+            if (preg_match($typeRegex, $headerName, $matches) === false) {
+                continue;
+            }
+            $type = $matches[1];
+            $subType = $matches[2];
+
+            foreach ($this->parseLimits($header) as $interval => $limit) {
+                $limits[$type][$interval][$subType] = $limit;
+            }
+
+        }
+        Cache::put(static::ENDPOINT, $limits['method']);
+        Cache::put("RIOT_API_APP_LIMITS", $limits['app']);
+    }
+
+    protected function canMakeRequest(): bool
+    {
+        $limits = array_merge(Cache::get(static::ENDPOINT, []), Cache::get('RIOT_API_APP_LIMITS', []));
+        if (!$limits) {
+            return true;
+        }
+
+        foreach ($limits as $interval => $limit) {
+            if ($this->rateLimitExceeded($limit['limit'], $limit['count'], $interval, env("RIOT_GAME_API_BUFFER", 1))) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @param array $total
+     * @param array $current
+     * @param int $buffer
+     */
+    protected function rateLimitExceeded(int $total, int $current, int $interval,  int $buffer): bool
+    {
+        if ($total <= ($current + $buffer)) {
+            $this->waitTime = $interval;
+            return true;
+        }
+
+        return false;
+    }
+
+    protected function parseLimits(array $headers): array
+    {
+        $limits = [];
+
+        foreach ($headers as $header) {
+            foreach (explode(',', $header) as $limitInterval)
+            {
+                $limitInterval = explode(':', $limitInterval);
+                $limit         = (int)$limitInterval[0];
+                $interval      = (int)$limitInterval[1];
+
+                $limits[$interval] = $limit;
+            }
+
+        }
+        return $limits;
     }
 
     protected function buildUrl(string $url = null, ?string $version = null): string

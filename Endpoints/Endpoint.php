@@ -4,9 +4,13 @@
 namespace ProjectZero4\RiotApi\Endpoints;
 
 
+use App\packages\ProjectZero4\RiotApi\Exceptions\RateLimitException;
+use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use JetBrains\PhpStorm\ArrayShape;
 use ProjectZero4\RiotApi\Client;
 
 abstract class Endpoint
@@ -40,13 +44,20 @@ abstract class Endpoint
      * @return array
      * @throws GuzzleException|Exception
      */
-    protected function sendRequest(string $url, array $query = [], $depth = 0): array
+    protected function sendRequest(string $url, array $query = [], int $depth = 0): array
     {
+
         if (!$this->canMakeRequest()) {
-            if ($depth === env("RIOT_GAMES_API_DEPTH_LIMIT", 5)) {
-                throw new Exception("Recursion depth ($depth) exceeded for Endpoint " . static::class);
+            if ($depth == env("RIOT_GAMES_API_DEPTH_LIMIT", 5)) {
+                $exception =  new RateLimitException("Recursion depth ($depth) exceeded for Endpoint " . static::class);
+                $exception->waitTime = $this->waitTime;
+                throw $exception;
             }
-            sleep($this->waitTime);
+            if ($depth > 1) {
+                dd($depth, env("RIOT_GAMES_API_DEPTH_LIMIT", 5));
+            }
+            Log::info("Wait time: $this->waitTime");
+//            sleep($this->waitTime);
             return $this->sendRequest($url, $query, ++$depth);
         }
 
@@ -56,47 +67,114 @@ abstract class Endpoint
         return json_decode($body, true);
     }
 
+    #[ArrayShape(['short' => "array", 'long' => "array"])]
+    protected function parseLimits(string $limitHeader, string $countHeader): array
+    {
+        if (str_contains($limitHeader, ',')) {
+            [$limitShort, $limitLong] = explode(',', $limitHeader);
+            [$limitLong, $intervalLong] = explode(':', $limitLong);
+            [$countShort, $countLong] = explode(',', $countHeader);
+            [$countLong] = explode(':', $countLong);
+            $long = [
+                'count' => $countLong,
+                'limit' => $limitLong,
+                'interval' => $intervalLong,
+            ];
+
+        } else {
+            $limitShort = $limitHeader;
+            $countShort = $countHeader;
+        }
+        [$limitShort, $intervalShort] = explode(':', $limitShort);
+        [$countShort] = explode(':', $countShort);
+        $limits =  [
+            'short' => [
+                'count' => $countShort,
+                'limit' => $limitShort,
+                'interval' => $intervalShort,
+            ],
+        ];
+        if (isset($long)) {
+            $limits['long'] = $long;
+        }
+
+        return $limits;
+    }
+
     protected function storeRateLimits(array $headers)
     {
-        $limits = [];
-        $rateLimitHeaders = [
-            "x-app-rate-limit",
-            "x-app-rate-limit-count",
-            "x-method-rate-limit",
-            "x-method-rate-limit-count",
+        $rateLimits = [];
+        $rateLimitGroupHeaders = [
+            'app' => [
+                "X-App-Rate-Limit",
+                "X-App-Rate-Limit-Count",
+            ],
+            'method' => [
+                "X-Method-Rate-Limit",
+                "X-Method-Rate-Limit-Count",
+            ],
         ];
 
-        $typeRegex = "/^x-(\w+)-rate.*-(\w+)$/";
-        foreach ($headers as $headerName => $header) {
-            $headerName = strtolower($headerName);
-            if (!in_array($headerName, $rateLimitHeaders)) {
-                continue;
-            }
-
-            if (preg_match($typeRegex, $headerName, $matches) === false) {
-                continue;
-            }
-            $type = $matches[1];
-            $subType = $matches[2];
-
-            foreach ($this->parseLimits($header) as $interval => $limit) {
-                $limits[$type][$interval][$subType] = $limit;
-            }
-
+        foreach ($rateLimitGroupHeaders as $group => $rateLimitHeaders) {
+            [$limitHeader, $countHeader] = $rateLimitHeaders;
+            $rateLimits[$group] = $this->parseLimits(reset($headers[$limitHeader]), reset($headers[$countHeader]));
         }
-        Cache::put(static::ENDPOINT, $limits['method']);
-        Cache::put("RIOT_API_APP_LIMITS", $limits['app']);
+
+        $this->setRateLimits($rateLimits);
+    }
+
+
+
+    public function getRateLimits(): array
+    {
+        return array_merge(
+            [Cache::tags(['riot-api-method'])->get(static::ENDPOINT, [])],
+            [Cache::tags(['riot-api-app'])->get('short', [])],
+            [Cache::tags(['riot-api-app'])->get('long', [])],
+        );
+    }
+
+    public function setRateLimits(array $rateLimits)
+    {
+        $oldShort = Cache::tags(['riot-api-app'])->get('short');
+        $oldLong = Cache::tags(['riot-api-app'])->get('long');
+        $oldMethod = Cache::tags(['riot-api-method'])->get(static::ENDPOINT);
+        $now = Carbon::now();
+        $nowString = Carbon::now()->format('Y-m-d H:i:s');
+        $short = $rateLimits['app']['short'];
+        $long = $rateLimits['app']['long'];
+        $method = $rateLimits['method']['short'];
+        if ($oldShort && Carbon::parse($oldShort['created_at'])->addSeconds($oldShort['interval'])->greaterThan($now)) {
+            $short['created_at'] = $oldShort['created_at'];
+        } else {
+            $short['created_at'] = $nowString;
+        }
+//        dd($oldLong);
+        if ($oldLong && Carbon::parse($oldLong['created_at'])->addSeconds($oldLong['interval'])->greaterThan($now)) {
+            $long['created_at'] = $oldLong['created_at'];
+        } else {
+            $long['created_at'] = $nowString;
+        }
+
+
+        if ($oldMethod && Carbon::parse($oldMethod['created_at'])->addSeconds($oldMethod['interval'])->greaterThan($now)) {
+            $method['created_at'] = $oldMethod['created_at'];
+        } else {
+            $method['created_at'] = $nowString;
+        }
+        Cache::tags(["riot-api-app"])->put('short', $short, $now->diffInSeconds(Carbon::parse($short['created_at']), false) + $short['interval']);
+        Cache::tags(["riot-api-app"])->put('long', $long, $now->diffInSeconds(Carbon::parse($long['created_at']), false) + $long['interval']);
+        Cache::tags(["riot-api-method"])->put(static::ENDPOINT, $method, $now->diffInSeconds(Carbon::parse($method['created_at']), false) + $method['interval']);
     }
 
     protected function canMakeRequest(): bool
     {
-        $limits = array_merge(Cache::get(static::ENDPOINT, []), Cache::get('RIOT_API_APP_LIMITS', []));
-        if (!$limits) {
-            return true;
-        }
-
-        foreach ($limits as $interval => $limit) {
-            if ($this->rateLimitExceeded($limit['limit'], $limit['count'], $interval, env("RIOT_GAME_API_BUFFER", 1))) {
+        $limits = $this->getRateLimits();
+        foreach ($limits as $limit) {
+            if (empty($limit)) {
+                continue;
+            }
+            if ($this->rateLimitExceeded($limit['limit'], $limit['count'], $limit['interval'], env("RIOT_GAME_API_BUFFER", 1))) {
                 return false;
             }
         }
@@ -105,12 +183,15 @@ abstract class Endpoint
     }
 
     /**
-     * @param array $total
-     * @param array $current
+     * @param int $total
+     * @param int $current
+     * @param int $interval
      * @param int $buffer
+     * @return bool
      */
     protected function rateLimitExceeded(int $total, int $current, int $interval,  int $buffer): bool
     {
+        Log::info("Total: $total, Current: $current, Buffer: $buffer, Interval: $interval");
         if ($total <= ($current + $buffer)) {
             $this->waitTime = $interval;
             return true;
@@ -119,23 +200,6 @@ abstract class Endpoint
         return false;
     }
 
-    protected function parseLimits(array $headers): array
-    {
-        $limits = [];
-
-        foreach ($headers as $header) {
-            foreach (explode(',', $header) as $limitInterval)
-            {
-                $limitInterval = explode(':', $limitInterval);
-                $limit         = (int)$limitInterval[0];
-                $interval      = (int)$limitInterval[1];
-
-                $limits[$interval] = $limit;
-            }
-
-        }
-        return $limits;
-    }
 
     protected function buildUrl(string $url = null, ?string $version = null): string
     {

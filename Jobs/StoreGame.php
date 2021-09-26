@@ -2,6 +2,7 @@
 
 namespace ProjectZero4\RiotApi\Jobs;
 
+use App\packages\ProjectZero4\RiotApi\Exceptions\RateLimitException;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -46,7 +47,12 @@ class StoreGame implements ShouldQueue
         }
 
         DB::transaction(function () use ($api) {
-            $data = $api->rawGameById($this->gameId);
+            try {
+                $data = $api->rawGameById($this->gameId);
+            } catch (RateLimitException $e) {
+                $this->release($e->waitTime + 5);
+                return;
+            }
             $info = $data['info'];
             $gameData = array_merge($info, [
                 'matchId' => $data['metadata']['matchId'],

@@ -2,6 +2,7 @@
 
 namespace ProjectZero4\RiotApi\Jobs;
 
+use ProjectZero4\RiotApi\Exceptions\RateLimitException;
 use Carbon\Carbon;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
@@ -45,18 +46,23 @@ class StoreSummonerGames implements ShouldQueue
         $seasonTimes = $api->getSeasonTimes($this->season);
         $offset = 0;
         $count = 100;
-        while ($gameIds = $api->listGamesBySummoner($this->summoner, [
-            'startTime' => Carbon::parse($seasonTimes['start'])->timestamp,
-            'endTime' => Carbon::parse($seasonTimes['end'])->timestamp,
-            'count' => $count,
-            'start' => $offset,
-        ])) {
-            foreach ($gameIds as $gameId) {
-                $jobs[] = new StoreGame($gameId);
-            }
+        try {
+            while ($gameIds = $api->listGamesBySummoner($this->summoner, [
+                'startTime' => Carbon::parse($seasonTimes['start'])->timestamp,
+                'endTime' => Carbon::parse($seasonTimes['end'])->timestamp,
+                'count' => $count,
+                'start' => $offset,
+            ])) {
+                foreach ($gameIds as $gameId) {
+                    $jobs[] = new StoreGame($gameId);
+                }
 
-            $offset += $count;
+                $offset += $count;
+            }
+            $this->batch()->add($jobs);
+        } catch (RateLimitException $e) {
+            $this->release($e->waitTime + 5);
         }
-        $this->batch()->add($jobs);
+
     }
 }

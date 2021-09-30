@@ -1,7 +1,7 @@
 <?php
 
 
-namespace App\packages\ProjectZero4\RiotApi\Exceptions;
+namespace ProjectZero4\RiotApi\Exceptions;
 
 
 use Exception;

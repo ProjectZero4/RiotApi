@@ -4,9 +4,8 @@
 namespace ProjectZero4\RiotApi\Endpoints;
 
 
-use App\packages\ProjectZero4\RiotApi\Exceptions\RateLimitException;
+use ProjectZero4\RiotApi\Exceptions\RateLimitException;
 use Carbon\Carbon;
-use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -42,7 +41,7 @@ abstract class Endpoint
      * @param array $query
      * @param int $depth
      * @return array
-     * @throws GuzzleException|Exception
+     * @throws GuzzleException|RateLimitException
      */
     protected function sendRequest(string $url, array $query = [], int $depth = 0): array
     {
@@ -57,7 +56,6 @@ abstract class Endpoint
                 dd($depth, env("RIOT_GAMES_API_DEPTH_LIMIT", 5));
             }
             Log::info("Wait time: $this->waitTime");
-//            sleep($this->waitTime);
             return $this->sendRequest($url, $query, ++$depth);
         }
 

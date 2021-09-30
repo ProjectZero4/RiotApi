@@ -3,7 +3,9 @@
 
 namespace ProjectZero4\RiotApi\Endpoints;
 
+use App\packages\ProjectZero4\RiotApi\Exceptions\RateLimitException;
 use Exception;
+use GuzzleHttp\Exception\GuzzleException;
 use ProjectZero4\RiotApi\Models\Summoner as SummonerModel;
 
 /**
@@ -40,6 +42,8 @@ class Game extends Endpoint
      * @param SummonerModel $summoner
      * @param array{startTime: int, endTime: int, queue: int, type: string, start: int, count: int} $query
      * @return array
+     * @throws RateLimitException
+     * @throws GuzzleException
      */
     public function listBySummoner(SummonerModel $summoner, array $query = []): array
     {
@@ -48,7 +52,7 @@ class Game extends Endpoint
 
     public function timelineByGame()
     {
-
+        //todo: this
     }
 
     /**

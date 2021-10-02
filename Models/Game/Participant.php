@@ -4,8 +4,12 @@
 namespace ProjectZero4\RiotApi\Models\Game;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use JetBrains\PhpStorm\Pure;
+use ProjectZero4\RiotApi\Models\Champion;
 use ProjectZero4\RiotApi\RiotApiCollection;
+use function ProjectZero4\RiotApi\iconPath;
 
 /**
  * Class Participant
@@ -244,5 +248,25 @@ class Participant extends GameBase
     public function runePage(): HasOne
     {
         return $this->hasOne(RunePage::class);
+    }
+
+    public function game(): HasManyThrough
+    {
+        return $this->hasManyThrough(Game::class, Team::class);
+    }
+
+    public function champion()
+    {
+        return $this->belongsTo(Champion::class, 'championId', 'key');
+    }
+
+    #[Pure] public function itemUrl(int $itemIndex): string
+    {
+        return iconPath("item/{$this->{"item$itemIndex"}}.png");
+    }
+
+    #[Pure] public function spellUrl(int $spellIndex): string
+    {
+        return iconPath("spell/{$this->{"summoner{$spellIndex}Id"}}.png");
     }
 }

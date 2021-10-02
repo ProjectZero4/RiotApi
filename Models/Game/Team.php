@@ -3,6 +3,7 @@
 
 namespace ProjectZero4\RiotApi\Models\Game;
 
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 use ProjectZero4\RiotApi\RiotApiCollection;
@@ -33,6 +34,7 @@ use ProjectZero4\RiotApi\RiotApiCollection;
  * @property int tower_kills
  *
  * @property-read RiotApiCollection<Participant> participants
+ * @property-read Game games
  */
 class Team extends GameBase
 {
@@ -83,8 +85,19 @@ class Team extends GameBase
         return $converted;
     }
 
+    /**
+     * @return HasMany
+     */
     public function participants(): HasMany
     {
         return $this->hasMany(Participant::class);
+    }
+
+    /**
+     * @return BelongsTo
+     */
+    public function game(): BelongsTo
+    {
+        return $this->belongsTo(Game::class);
     }
 }

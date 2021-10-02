@@ -25,7 +25,7 @@ use function PHPUnit\Framework\isEmpty;
  * @property-read Summoner $summoner
  * @property-read ChampionMastery $mastery
  * @property-read League $league
- * @property-read Game $game
+ * @property-read Game $games
  * @property-read Status $status
  */
 class RiotApi
@@ -89,7 +89,7 @@ class RiotApi
             'summoner' => $this->_summoner = new Summoner($this->client, $this->region),
             'mastery' => $this->_mastery = new ChampionMastery($this->client, $this->region),
             'league' => $this->_league = new League($this->client, $this->region),
-            'game' => $this->_game = new Game($this->client, $this->region),
+            'games' => $this->_game = new Game($this->client, $this->region),
             default => throw new Exception("$endpoint is not currently supported or is invalid!"),
         };
     }
@@ -367,5 +367,16 @@ class RiotApi
             Cache::add('lol-queues', $queues, 3600);
         }
         return $queues;
+    }
+
+    public function getSummonerSpells()
+    {
+        $spells = Cache::get('lol-spells');
+        if (!$spells) {
+            $spells = json_decode($this->client->get("https://ddragon.leagueoflegends.com/cdn/11.19.1/data/en_US/summoner.json")->getBody()->getContents(),
+                true);
+            Cache::add('lol-spells', $spells, 3600);
+        }
+        return $spells;
     }
 }

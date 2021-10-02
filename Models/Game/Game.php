@@ -3,15 +3,16 @@
 
 namespace ProjectZero4\RiotApi\Models\Game;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use ProjectZero4\RiotApi\Models;
+use ProjectZero4\RiotApi\Models\Summoner as SummonerModel;
 use ProjectZero4\RiotApi\RiotApiCollection;
 
 /**
  * Class Game
  * @package ProjectZero4\RiotApi\Models
  *
- * @property int gameCreation
+ * @property-read Carbon gameCreation
  * @property int gameDuration
  * @property int gameId
  * @property string gameMode
@@ -55,6 +56,11 @@ class Game extends GameBase
         return $this->gameDuration;
     }
 
+    public function getGameCreationAttribute(int $gameCreation): Carbon
+    {
+        return Carbon::createFromTimestampMs($gameCreation);
+    }
+
     protected function convertAttributes(array $attributes): array
     {
         unset($attributes['participants'], $attributes['teams']);
@@ -69,5 +75,10 @@ class Game extends GameBase
     public function teams(): HasMany
     {
         return $this->hasMany(Team::class);
+    }
+
+    public function participantBySummoner(SummonerModel $summoner): Participant
+    {
+        return $participant = $this->participants()->where('summonerId', $summoner->id)->first();
     }
 }

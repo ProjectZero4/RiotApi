@@ -2,7 +2,7 @@
 
 namespace ProjectZero4\RiotApi;
 
-use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Collection;
 use ProjectZero4\RiotApi\Models\Cacheable;
 
 class RiotApiCollection extends Collection

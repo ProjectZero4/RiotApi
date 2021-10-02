@@ -3,7 +3,12 @@
 
 namespace ProjectZero4\RiotApi\Models;
 
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Query\JoinClause;
 use ProjectZero4\RiotApi\Models\Base;
+use ProjectZero4\RiotApi\Models\Game\Game;
+use ProjectZero4\RiotApi\Models\Game\Participant;
 use ProjectZero4\RiotApi\RiotApiCollection;
 use Illuminate\Support\Collection;
 use JetBrains\PhpStorm\Pure;
@@ -67,8 +72,32 @@ class Summoner extends Base
         return $this->hasMany(ChampionMastery::class, 'summonerId', 'id');
     }
 
-    public function leagues()
+    public function leagues(): HasMany
     {
         return $this->hasMany(League::class, 'summonerId', 'id');
+    }
+
+    /**
+     * @return HasManyThrough
+     */
+    public function games(): HasManyThrough
+    {
+        return $this->hasManyThrough(Game::class, Participant::class, 'summonerId', 'id', 'id', 'game_id')
+            ->with('participants');
+
+    }
+
+    public function recentGames(): HasManyThrough
+    {
+        return $this->games()->orderBy('gameCreation', 'desc')->limit(20);
+    }
+
+    public function gameTest()
+    {
+    }
+
+    public function participants(): HasMany
+    {
+        return $this->hasMany(Participant::class, 'summonerId', 'game_id');
     }
 }

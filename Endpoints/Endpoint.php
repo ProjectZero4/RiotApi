@@ -52,10 +52,7 @@ abstract class Endpoint
                 $exception->waitTime = $this->waitTime;
                 throw $exception;
             }
-            if ($depth > 1) {
-                dd($depth, env("RIOT_GAMES_API_DEPTH_LIMIT", 5));
-            }
-            Log::info("Wait time: $this->waitTime");
+
             return $this->sendRequest($url, $query, ++$depth);
         }
 
@@ -83,6 +80,7 @@ abstract class Endpoint
             $limitShort = $limitHeader;
             $countShort = $countHeader;
         }
+
         [$limitShort, $intervalShort] = explode(':', $limitShort);
         [$countShort] = explode(':', $countShort);
         $limits =  [
@@ -142,12 +140,13 @@ abstract class Endpoint
         $short = $rateLimits['app']['short'];
         $long = $rateLimits['app']['long'];
         $method = $rateLimits['method']['short'];
+
         if ($oldShort && Carbon::parse($oldShort['created_at'])->addSeconds($oldShort['interval'])->greaterThan($now)) {
             $short['created_at'] = $oldShort['created_at'];
         } else {
             $short['created_at'] = $nowString;
         }
-//        dd($oldLong);
+
         if ($oldLong && Carbon::parse($oldLong['created_at'])->addSeconds($oldLong['interval'])->greaterThan($now)) {
             $long['created_at'] = $oldLong['created_at'];
         } else {

@@ -89,7 +89,7 @@ class RiotApi
             'summoner' => $this->_summoner = new Summoner($this->client, $this->region),
             'mastery' => $this->_mastery = new ChampionMastery($this->client, $this->region),
             'league' => $this->_league = new League($this->client, $this->region),
-            'games' => $this->_game = new Game($this->client, $this->region),
+            'game' => $this->_game = new Game($this->client, $this->region),
             default => throw new Exception("$endpoint is not currently supported or is invalid!"),
         };
     }
@@ -358,6 +358,7 @@ class RiotApi
         }
         return $maps;
     }
+
     public function getQueues(): array
     {
         $queues = Cache::get('lol-queues');

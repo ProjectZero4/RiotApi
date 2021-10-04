@@ -140,7 +140,6 @@ abstract class Endpoint
         $short = $rateLimits['app']['short'];
         $long = $rateLimits['app']['long'];
         $method = $rateLimits['method']['short'];
-
         if ($oldShort && Carbon::parse($oldShort['created_at'])->addSeconds($oldShort['interval'])->greaterThan($now)) {
             $short['created_at'] = $oldShort['created_at'];
         } else {

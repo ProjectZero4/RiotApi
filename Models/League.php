@@ -33,6 +33,9 @@ class League extends Base
 {
     use Cacheable;
 
+    const SOLO_Q = 'RANKED_SOLO_5x5';
+    const FLEX = 'RANKED_FLEX_SR';
+
     /**
      * @var string
      */
@@ -76,8 +79,15 @@ class League extends Base
         } elseif (empty($tier)) {
             return iconPath("tier/provisional.png");
         }
+        $tier = strtolower($tier);
+        $rank = strtolower($rank);
 
         return iconPath("tier/{$tier}_{$rank}.png");
+    }
+
+    #[Pure] public function iconUrl(): string
+    {
+        return $this->tierIconUrl($this->tier, $this->rank);
     }
 
     #[Pure] public function getUnrankedIcon(): string

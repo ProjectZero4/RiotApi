@@ -3,8 +3,10 @@
 
 namespace ProjectZero4\RiotApi\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Query\JoinClause;
 use ProjectZero4\RiotApi\Models\Base;
 use ProjectZero4\RiotApi\Models\Game\Game;
@@ -26,8 +28,12 @@ use function ProjectZero4\RiotApi\iconPath;
  * @property int revisionDate
  * @property int summonerLevel
  * @property string nameKey
- * @property RiotApiCollection<ChampionMastery> masteries
- * @property RiotApiCollection<League> leagues
+ * @property-read RiotApiCollection<ChampionMastery> masteries
+ * @property-read RiotApiCollection<League> leagues
+ * @property-read RiotApiCollection<Game> recentGames
+ * @property-read Carbon lastSeen
+ * @property-read League soloQ
+ * @property-read League flex
  */
 class Summoner extends Base
 {
@@ -67,7 +73,7 @@ class Summoner extends Base
         return iconPath("profile/{$this->profileIconId}.png");
     }
 
-    public function masteries()
+    public function masteries(): HasMany
     {
         return $this->hasMany(ChampionMastery::class, 'summonerId', 'id');
     }
@@ -99,5 +105,30 @@ class Summoner extends Base
     public function participants(): HasMany
     {
         return $this->hasMany(Participant::class, 'summonerId', 'game_id');
+    }
+
+    public function getLastSeenAttribute(): Carbon
+    {
+        return $this->recentGames->first()->gameCreation;
+    }
+
+    public function lastGame()
+    {
+        return $this->games()->with('participants')->latest('gameCreation')->limit(1)->first();
+    }
+
+    public function lastGameParticipant(): Participant
+    {
+        return $this->lastGame()->participantBySummoner($this);
+    }
+
+    public function soloQ(): HasOne
+    {
+        return $this->hasOne(League::class, 'summonerId', 'id')->where('queueType', League::SOLO_Q);
+    }
+
+    public function flex(): HasOne
+    {
+        return $this->hasOne(League::class, 'summonerId', 'id')->where('queueType', League::FLEX);
     }
 }

@@ -109,7 +109,8 @@ class Summoner extends Base
 
     public function getLastSeenAttribute(): Carbon
     {
-        return $this->recentGames->first()->gameCreation;
+        $latestGame = $this->recentGames->first();
+        return $latestGame->gameCreation->addSeconds($latestGame->gameDuration);
     }
 
     public function lastGame()
@@ -130,5 +131,10 @@ class Summoner extends Base
     public function flex(): HasOne
     {
         return $this->hasOne(League::class, 'summonerId', 'id')->where('queueType', League::FLEX);
+    }
+
+    public static function fromName(string $summonerName): ?Summoner
+    {
+        return Summoner::where('nameKey', Summoner::convertSummonerNameToKey($summonerName))->first();
     }
 }

@@ -1,0 +1,23 @@
+{
+    "name": "projectzero4/riot-api",
+    "description": "A PHP library that allows you to easily use Riot Games API using Laravel Models and also stores the information in a database.",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Josh Capener",
+            "email": "josh@joshcapener.co.uk"
+        }
+    ],
+    "require": {
+        "php": ">=8.0",
+        "laravel/framework": "8.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "ProjectZero4\\RiotApi\\": "src"
+        },
+        "files": [
+            "src/helpers.php"
+        ]
+    }
+}

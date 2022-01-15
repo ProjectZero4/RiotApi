@@ -31,7 +31,7 @@ use function ProjectZero4\RiotApi\iconPath;
  * @property-read RiotApiCollection<ChampionMastery> masteries
  * @property-read RiotApiCollection<League> leagues
  * @property-read RiotApiCollection<Game> recentGames
- * @property-read Carbon lastSeen
+ * @property-read ?Carbon lastSeen
  * @property-read League soloQ
  * @property-read League flex
  */
@@ -107,10 +107,12 @@ class Summoner extends Base
         return $this->hasMany(Participant::class, 'summonerId', 'game_id');
     }
 
-    public function getLastSeenAttribute(): Carbon
+    public function getLastSeenAttribute(): ?Carbon
     {
-        $latestGame = $this->recentGames->first();
-        return $latestGame->gameCreation->addSeconds($latestGame->gameDuration);
+        if ($latestGame = $this->recentGames->first()) {
+            return $latestGame->gameCreation->addSeconds($latestGame->gameDuration);
+        }
+        return null;
     }
 
     public function lastGame()
@@ -120,7 +122,11 @@ class Summoner extends Base
 
     public function lastGameParticipant(): Participant
     {
-        return $this->lastGame()->participantBySummoner($this);
+        if ($lastGame = $this->lastGame()) {
+            return $lastGame->participantBySummoner($this);
+        }
+
+        return new Participant();
     }
 
     public function soloQ(): HasOne

@@ -43,6 +43,8 @@ class Summoner extends Base
 
     protected $primaryKey = "internalKey";
 
+    protected $with = ['soloQ', 'flex'];
+
     protected $fillable = [
         'id',
         'accountId',

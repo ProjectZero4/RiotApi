@@ -187,7 +187,6 @@ abstract class Endpoint
      */
     protected function rateLimitExceeded(int $total, int $current, int $interval,  int $buffer): bool
     {
-        Log::info("Total: $total, Current: $current, Buffer: $buffer, Interval: $interval");
         if ($total <= ($current + $buffer)) {
             $this->waitTime = $interval;
             return true;

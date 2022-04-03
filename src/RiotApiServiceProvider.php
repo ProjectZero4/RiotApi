@@ -5,8 +5,6 @@ namespace ProjectZero4\RiotApi;
 
 
 use Illuminate\Support\ServiceProvider;
-use ProjectZero4\RiotApi\RiotApi;
-use function ProjectZero4\RiotApi\riotApiRoot;
 
 class RiotApiServiceProvider extends ServiceProvider
 {
@@ -17,6 +15,7 @@ class RiotApiServiceProvider extends ServiceProvider
                 Commands\Champions::class,
                 Commands\Maps::class,
                 Commands\Queues::class,
+                Commands\Games::class,
             ]);
         }
 

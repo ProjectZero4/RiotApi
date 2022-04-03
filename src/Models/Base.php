@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\Model;
  */
 abstract class Base extends Model
 {
-
     /**
      * @param array $models
      * @return RiotApiCollection

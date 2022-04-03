@@ -6,7 +6,7 @@ namespace ProjectZero4\RiotApi;
 
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Support\Facades\Log;
+use GuzzleHttp\Exception\GuzzleException;
 use ProjectZero4\RiotApi\Endpoints\Status;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -25,7 +25,7 @@ use function PHPUnit\Framework\isEmpty;
  * @property-read Summoner $summoner
  * @property-read ChampionMastery $mastery
  * @property-read League $league
- * @property-read Game $games
+ * @property-read Game $game
  * @property-read Status $status
  */
 class RiotApi
@@ -38,7 +38,7 @@ class RiotApi
     /**
      * @var string
      */
-    protected string $region;
+    public readonly string $region;
 
     /**
      * @var Summoner
@@ -61,19 +61,22 @@ class RiotApi
     protected Game $_game;
 
     /**
+     * @var Status
+     */
+    protected Status $_status;
+
+    /**
      * RiotApi constructor.
      */
     public function __construct(string $region)
     {
         $this->client = new Client();
-        $this->summoner = new Summoner($this->client, $region);
-        $this->mastery = new ChampionMastery($this->client, $region);
-        $this->league = new League($this->client, $region);
-        $this->status = new Status($this->client, $region);
         $this->region = $region;
     }
 
     /**
+     * Lazy loading of endpoints used at runtime
+     *
      * @param string $endpoint
      * @return Endpoint
      * @throws Exception
@@ -90,6 +93,7 @@ class RiotApi
             'mastery' => $this->_mastery = new ChampionMastery($this->client, $this->region),
             'league' => $this->_league = new League($this->client, $this->region),
             'game' => $this->_game = new Game($this->client, $this->region),
+            'status' => $this->_status = new Status($this->client, $this->region),
             default => throw new Exception("$endpoint is not currently supported or is invalid!"),
         };
     }
@@ -229,16 +233,17 @@ class RiotApi
      * @param Models\Summoner $summoner
      * @param array{startTime: int, endTime: int, queue: int, type: string, start: int, count: int} $query
      * @return array
+     * @throws Exceptions\RateLimitException
+     * @throws GuzzleException
      */
     public function listGamesBySummoner(Models\Summoner $summoner, array $query = []): array
     {
-        Log::info(print_r($query, true));
         return $this->game->listBySummoner($summoner, $query);
     }
 
-    public function rawGameById(string $gameId): array
+    public function rawGameById(string $matchId): array
     {
-        return $this->game->byGameId($gameId);
+        return $this->game->byMatchId($matchId);
     }
 
 
@@ -250,7 +255,7 @@ class RiotApi
     {
         $champions = Cache::get('lol-champions');
         if (!$champions) {
-            $champions = json_decode($this->client->get("https://ddragon.leagueoflegends.com/cdn/{$this->getCurrentPatch()['name']}.1/data/en_GB/champion.json")->getBody()->getContents(),
+            $champions = json_decode($this->client->get("https://ddragon.leagueoflegends.com/cdn/{$this->getCurrentPatch()}/data/en_GB/champion.json")->getBody()->getContents(),
                 true);
             Cache::add('lol-champions', $champions, 3600);
         }
@@ -261,7 +266,7 @@ class RiotApi
     {
         $champions = Cache::get("lol-champion-{$championId}");
         if (!$champions) {
-            $champions = json_decode($this->client->get("https://ddragon.leagueoflegends.com/cdn/{$this->getCurrentPatch()['name']}.1/data/en_GB/champion/{$championId}.json")->getBody()->getContents(),
+            $champions = json_decode($this->client->get("https://ddragon.leagueoflegends.com/cdn/{$this->getCurrentPatch()}/data/en_GB/champion/{$championId}.json")->getBody()->getContents(),
                 true);
             Cache::add("lol-champion-{$championId}", $champions, 3600);
         }
@@ -278,7 +283,7 @@ class RiotApi
     {
         $versions = Cache::get('lol-patches');
         if (!$versions) {
-            $versions = json_decode($this->client->get("https://raw.githubusercontent.com/CommunityDragon/Data/master/patches.json")->getBody()->getContents(),
+            $versions = json_decode($this->client->get("https://ddragon.leagueoflegends.com/api/versions.json")->getBody()->getContents(),
                 true);
             Cache::add('lol-patches', $versions, 3600);
         }
@@ -288,11 +293,11 @@ class RiotApi
     #[ArrayShape(["name" => "string", "start" => "int", "season" => "int"])]
     public function getCurrentPatch()
     {
-        $patches = $this->getPatches()['patches'];
-        return last($patches);
+        $patches = $this->getPatches();
+        return reset($patches);
     }
 
-    public function getStatus()
+    public function getStatus(): string
     {
         $status = $this->status->getStatus();
         if (isEmpty($status)) {
@@ -303,7 +308,7 @@ class RiotApi
 
     public function getCurrentSeason(): int
     {
-        $currentPatch = $this->getCurrentPatch()['name'];
+        $currentPatch = $this->getCurrentPatch();
         [$season] = explode('.', $currentPatch);
         return $season;
     }
@@ -319,7 +324,7 @@ class RiotApi
         $patches = $this->getPatches();
         $startTime = 0;
         $endTime = 0;
-        foreach ($patches['patches'] as $patch) {
+        foreach ($patches as $patch) {
             if ($this->patchIsPartOfSeason($patch['name'], $season)) {
                 if ($startTime === 0) {
                     $startTime = $patch['start'];

@@ -33,7 +33,7 @@ class Game extends Endpoint
      * @param string $matchId
      * @return array{metadata: array, info: array}
      */
-    public function byGameId(string $matchId): array
+    public function byMatchId(string $matchId): array
     {
         return $this->sendRequest($this->buildUrl($matchId));
     }

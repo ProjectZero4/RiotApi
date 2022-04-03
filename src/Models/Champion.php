@@ -28,7 +28,7 @@ use function ProjectZero4\RiotApi\championPath;
  * @property object spells
  * @property object passive
  */
-class Champion extends Model
+class Champion extends Base
 {
     use Cacheable;
 

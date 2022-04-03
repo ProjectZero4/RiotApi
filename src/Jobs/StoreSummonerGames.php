@@ -2,6 +2,7 @@
 
 namespace ProjectZero4\RiotApi\Jobs;
 
+use GuzzleHttp\Exception\GuzzleException;
 use ProjectZero4\RiotApi\Exceptions\RateLimitException;
 use Carbon\Carbon;
 use Illuminate\Bus\Batchable;
@@ -38,30 +39,32 @@ class StoreSummonerGames implements ShouldQueue
      */
     public function handle(RiotApi $api)
     {
-        //
-        if ($this->batch()->canceled()) {
+        if ($this->batch() && $this->batch()->canceled()) {
             return;
         }
-        $jobs = [];
-        $seasonTimes = $api->getSeasonTimes($this->season);
         $offset = 0;
         $count = 100;
+        $start = Carbon::now()->subYears(3)->timestamp;
+        $end = Carbon::now()->timestamp;
         try {
-            while ($gameIds = $api->listGamesBySummoner($this->summoner, [
-                'startTime' => Carbon::parse($seasonTimes['start'])->timestamp,
-                'endTime' => Carbon::parse($seasonTimes['end'])->timestamp,
+            while ($matchIds = $api->listGamesBySummoner($this->summoner, [
+                'startTime' => $start,
+                'endTime' => $end,
                 'count' => $count,
                 'start' => $offset,
             ])) {
-                foreach ($gameIds as $gameId) {
-                    $jobs[] = new StoreGame($gameId);
+                $jobs = [];
+                foreach ($matchIds as $matchId) {
+                    $jobs[] = new StoreGame($matchId);
                 }
 
                 $offset += $count;
+                $this->batch()->add($jobs);
             }
-            $this->batch()->add($jobs);
         } catch (RateLimitException $e) {
             $this->release($e->waitTime + 5);
+        } catch (GuzzleException $e) {
+            $this->release(60);
         }
 
     }

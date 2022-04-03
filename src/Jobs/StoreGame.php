@@ -2,7 +2,6 @@
 
 namespace ProjectZero4\RiotApi\Jobs;
 
-use App\packages\ProjectZero4\RiotApi\Exceptions\RateLimitException;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -10,6 +9,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
+use ProjectZero4\RiotApi\Exceptions\RateLimitException;
 use ProjectZero4\RiotApi\Models;
 use ProjectZero4\RiotApi\RiotApi;
 use ProjectZero4\RiotApi\RiotApiCollection;
@@ -18,16 +18,16 @@ class StoreGame implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, Batchable;
 
-    protected string $gameId;
+    protected string $matchId;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct(string $gameId)
+    public function __construct(string $matchId)
     {
-        $this->gameId = $gameId;
+        $this->matchId = $matchId;
     }
 
     /**
@@ -42,13 +42,13 @@ class StoreGame implements ShouldQueue
             return;
         }
 
-        if (Models\Game\Game::where('gameId', $this->gameId)->first()) {
+        if (Models\Game\Game::where('matchId', $this->matchId)->first()) {
             return;
         }
 
         DB::transaction(function () use ($api) {
             try {
-                $data = $api->rawGameById($this->gameId);
+                $data = $api->rawGameById($this->matchId);
             } catch (RateLimitException $e) {
                 $this->release($e->waitTime + 5);
                 return;

@@ -9,12 +9,18 @@
         }
     ],
     "require": {
-        "php": ">=8.0",
-        "laravel/framework": "8.*"
+        "php": "~8.1",
+        "laravel/framework": "*",
+        "predis/predis": "*",
+        "laravel/horizon": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "*"
     },
     "autoload": {
         "psr-4": {
-            "ProjectZero4\\RiotApi\\": "src"
+            "ProjectZero4\\RiotApi\\": "src",
+            "ProjectZero4\\RiotApi\\Tests\\": "tests"
         },
         "files": [
             "src/helpers.php"

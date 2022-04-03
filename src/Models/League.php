@@ -36,6 +36,8 @@ class League extends Base
     const SOLO_Q = 'RANKED_SOLO_5x5';
     const FLEX = 'RANKED_FLEX_SR';
 
+    public static int $cacheTime = 60;
+
     /**
      * @var string
      */

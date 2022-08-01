@@ -32,8 +32,8 @@ use function ProjectZero4\RiotApi\iconPath;
  * @property-read RiotApiCollection<League> leagues
  * @property-read RiotApiCollection<Game> recentGames
  * @property-read ?Carbon lastSeen
- * @property-read League soloQ
- * @property-read League flex
+ * @property-read ?League soloQ
+ * @property-read ?League flex
  */
 class Summoner extends Base
 {
@@ -43,7 +43,9 @@ class Summoner extends Base
 
     protected $primaryKey = "internalKey";
 
-    protected $with = ['soloQ', 'flex'];
+    protected $with = [
+        'leagues',
+    ];
 
     protected $fillable = [
         'id',
@@ -53,6 +55,11 @@ class Summoner extends Base
         'profileIconId',
         'revisionDate',
         'summonerLevel',
+    ];
+
+    protected $appends = [
+        'soloQ',
+        'flex',
     ];
 
     public static int $cacheTime = 120;
@@ -131,14 +138,14 @@ class Summoner extends Base
         return new Participant();
     }
 
-    public function soloQ(): HasOne
+    public function getSoloQAttribute(): ?League
     {
-        return $this->hasOne(League::class, 'summonerId', 'id')->where('queueType', League::SOLO_Q);
+        return $this->leagues()->where('queueType', League::SOLO_Q)->first();
     }
 
-    public function flex(): HasOne
+    public function getFlexAttribute(): ?League
     {
-        return $this->hasOne(League::class, 'summonerId', 'id')->where('queueType', League::FLEX);
+        return $this->leagues()->where('queueType', League::FLEX)->first();
     }
 
     public static function fromName(string $summonerName): ?Summoner

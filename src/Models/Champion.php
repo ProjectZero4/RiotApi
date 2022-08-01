@@ -38,25 +38,49 @@ class Champion extends Base
 
     protected $guarded = ['internalKey'];
 
+    protected $appends = [
+        'defaultIconUrl',
+        'defaultLoadingUrl',
+        'defaultSplashUrl',
+        'defaultTileUrl',
+    ];
+
+    #[Pure] public function getDefaultIconUrlAttribute(): string
+    {
+        return $this->iconUrl();
+    }
+
     #[Pure] public function iconUrl(): string
     {
         return championPath("icon/{$this->id}.png");
     }
 
-    #[Pure] public function loadingUrl(int $skinId = 0): string
+    #[Pure] public function getDefaultLoadingUrlAttribute(): string
     {
-        return championPath("loading/{$this->id}_{$skinId}.jpg");
+        return $this->loadingUrl();
     }
 
+    #[Pure] public function loadingUrl(int $skinId = 0): string
+    {
+        return championPath("loading/{$this->id}_$skinId.jpg");
+    }
+
+    #[Pure] public function getDefaultSplashUrlAttribute(): string
+    {
+        return $this->splashUrl();
+    }
     #[Pure] public function splashUrl(int $skinId = 0): string
     {
-        return championPath("splash/{$this->id}_{$skinId}.jpg");
+        return championPath("splash/{$this->id}_$skinId.jpg");
+    }
+
+    #[Pure] public function getDefaultTileUrlAttribute(): string
+    {
+        return $this->tileUrl();
     }
 
     #[Pure] public function tileUrl(int $skinId = 0): string
     {
         return championPath("tile/{$this->id}_{$skinId}.jpg");
     }
-
-
 }

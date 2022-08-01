@@ -28,6 +28,8 @@ use function ProjectZero4\RiotApi\iconPath;
  * @property boolean freshBlood
  * @property boolean hotStreak
  * @property-read string queueName
+ *
+ * @property-read int totalGames
  */
 class League extends Base
 {
@@ -42,6 +44,13 @@ class League extends Base
      * @var string
      */
     protected $table = "leagues";
+
+    protected $appends = [
+        'unrankedIcon',
+        'iconUrl',
+        'queueName',
+        'winRate',
+    ];
     /**
      * @var string[]
      */
@@ -97,4 +106,23 @@ class League extends Base
         return iconPath("tier/provisional.png");
     }
 
+    public function getUnrankedIconAttribute(): string
+    {
+        return $this->getUnrankedIcon();
+    }
+
+    public function getIconUrlAttribute(): string
+    {
+        return $this->iconUrl();
+    }
+
+    public function getTotalGamesAttribute(): int
+    {
+        return $this->wins + $this->losses;
+    }
+
+    public function getWinRateAttribute(): float
+    {
+        return round($this->wins / $this->totalGames, 2) * 100;
+    }
 }

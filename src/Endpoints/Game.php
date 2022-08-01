@@ -64,6 +64,5 @@ class Game extends Endpoint
             'euw1' => 'europe',
             default => throw new Exception("$this->region is not currently supported or is invalid!"),
         };
-
     }
 }

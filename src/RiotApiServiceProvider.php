@@ -16,6 +16,7 @@ class RiotApiServiceProvider extends ServiceProvider
                 Commands\Maps::class,
                 Commands\Queues::class,
                 Commands\Games::class,
+                Commands\Fresh::class,
             ]);
         }
 

@@ -7,6 +7,9 @@ namespace ProjectZero4\RiotApi;
 use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Support\Facades\Artisan;
+use ProjectZero4\RiotApi\Data\Spectator\FeaturedGames;
+use ProjectZero4\RiotApi\Endpoints\Spectator;
 use ProjectZero4\RiotApi\Endpoints\Status;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -17,6 +20,8 @@ use ProjectZero4\RiotApi\Endpoints\Game;
 use ProjectZero4\RiotApi\Endpoints\League;
 use ProjectZero4\RiotApi\Endpoints\Summoner;
 use ProjectZero4\RiotApi\Models\Champion;
+use ProjectZero4\RiotApi\Data\Spell;
+
 use function PHPUnit\Framework\isEmpty;
 
 /**
@@ -27,6 +32,7 @@ use function PHPUnit\Framework\isEmpty;
  * @property-read League $league
  * @property-read Game $game
  * @property-read Status $status
+ * @property-read Spectator $spectator
  */
 class RiotApi
 {
@@ -66,6 +72,11 @@ class RiotApi
     protected Status $_status;
 
     /**
+     * @var Spectator
+     */
+    protected Spectator $_spectator;
+
+    /**
      * RiotApi constructor.
      */
     public function __construct(string $region)
@@ -94,6 +105,7 @@ class RiotApi
             'league' => $this->_league = new League($this->client, $this->region),
             'game' => $this->_game = new Game($this->client, $this->region),
             'status' => $this->_status = new Status($this->client, $this->region),
+            'spectator' => $this->_spectator = new Spectator($this->client, $this->region),
             default => throw new Exception("$endpoint is not currently supported or is invalid!"),
         };
     }
@@ -144,6 +156,8 @@ class RiotApi
         }
         $response = $this->summoner->bySummonerName($summonerName);
         $summonerModel->fill($response)->save();
+        $this->leagueBySummoner($summonerModel);
+        Artisan::queue('riotApi:games', ["--summonerName", "$summonerModel->nameKey"]);
         return $summonerModel;
     }
 
@@ -228,6 +242,27 @@ class RiotApi
      * =================== GAME (Match) ENDPOINTS ===================
      */
 
+    public function activeGameBySummoner(Models\Summoner $summoner): array
+    {
+        return $this->spectator->bySummonerId($summoner->id);
+    }
+
+    public function featuredGames(): FeaturedGames
+    {
+        if (!$featuredGames = Cache::get('featuredGames')) {
+            $featuredGames = $this->spectator->featuredGames();
+            // to allow $summoner as DTO property instead of $summonerName
+            foreach ($featuredGames['gameList'] as &$game) {
+                foreach ($game['participants'] as &$participant) {
+                    $participant['summoner'] = $participant['summonerName'];
+                    $participant['champion'] = $participant['championId'];
+                }
+            }
+            Cache::put('featuredGames', $featuredGames);
+        }
+        $featuredGames['gameList'] = [$featuredGames['gameList'][0]];
+        return FeaturedGames::from($featuredGames);
+    }
 
     /**
      * @param Models\Summoner $summoner
@@ -255,19 +290,54 @@ class RiotApi
     {
         $champions = Cache::get('lol-champions');
         if (!$champions) {
-            $champions = json_decode($this->client->get("https://ddragon.leagueoflegends.com/cdn/{$this->getCurrentPatch()}/data/en_GB/champion.json")->getBody()->getContents(),
-                true);
+            $champions = json_decode(
+                $this->client->get(
+                    "https://ddragon.leagueoflegends.com/cdn/{$this->getCurrentPatch()}/data/en_GB/champion.json"
+                )->getBody()->getContents(),
+                true
+            );
             Cache::add('lol-champions', $champions, 3600);
         }
         return $champions;
+    }
+    public function getSpells()
+    {
+        $spells = Cache::get('lol-spells');
+        if (!$spells) {
+            $spells = json_decode(
+                $this->client->get(
+                    "https://ddragon.leagueoflegends.com/cdn/{$this->getCurrentPatch()}/data/en_GB/summoner.json"
+                )->getBody()->getContents(),
+                true
+            );
+            Cache::add('lol-spells', $spells, 3600);
+        }
+        return $spells;
+    }
+
+    /**
+     * @param int $key
+     * @return Spell
+     */
+    public function getSpellByKey(int $key): Spell
+    {
+        $spells = collect($this->getSpells()['data'])->mapWithKeys(function ($spell, $key) {
+            return [$spell['key'] => $spell];
+        });
+
+        return Spell::from($spells->get($key));
     }
 
     public function getChampion(string $championId)
     {
         $champions = Cache::get("lol-champion-{$championId}");
         if (!$champions) {
-            $champions = json_decode($this->client->get("https://ddragon.leagueoflegends.com/cdn/{$this->getCurrentPatch()}/data/en_GB/champion/{$championId}.json")->getBody()->getContents(),
-                true);
+            $champions = json_decode(
+                $this->client->get(
+                    "https://ddragon.leagueoflegends.com/cdn/{$this->getCurrentPatch()}/data/en_GB/champion/{$championId}.json"
+                )->getBody()->getContents(),
+                true
+            );
             Cache::add("lol-champion-{$championId}", $champions, 3600);
         }
         return $champions;
@@ -279,12 +349,26 @@ class RiotApi
         return Champion::whereKey($championKey)->first();
     }
 
+    public function championByKey(int $championKey): Champion
+    {
+        $cacheKey = "champions/key/$championKey";
+        if (!$champion = Cache::get($cacheKey)) {
+            $champion = Champion::where('key', $championKey)->firstOrFail();
+            Cache::put($cacheKey, $champion->toArray());
+            return $champion;
+        }
+
+        return (new Champion($champion));
+    }
+
     public function getPatches()
     {
         $versions = Cache::get('lol-patches');
         if (!$versions) {
-            $versions = json_decode($this->client->get("https://ddragon.leagueoflegends.com/api/versions.json")->getBody()->getContents(),
-                true);
+            $versions = json_decode(
+                $this->client->get("https://ddragon.leagueoflegends.com/api/versions.json")->getBody()->getContents(),
+                true
+            );
             Cache::add('lol-patches', $versions, 3600);
         }
         return $versions;
@@ -357,8 +441,11 @@ class RiotApi
     {
         $maps = Cache::get('lol-maps');
         if (!$maps) {
-            $maps = json_decode($this->client->get("https://static.developer.riotgames.com/docs/lol/maps.json")->getBody()->getContents(),
-                true);
+            $maps = json_decode(
+                $this->client->get("https://static.developer.riotgames.com/docs/lol/maps.json")->getBody()->getContents(
+                ),
+                true
+            );
             Cache::add('lol-maps', $maps, 3600);
         }
         return $maps;
@@ -368,8 +455,11 @@ class RiotApi
     {
         $queues = Cache::get('lol-queues');
         if (!$queues) {
-            $queues = json_decode($this->client->get("https://static.developer.riotgames.com/docs/lol/queues.json")->getBody()->getContents(),
-                true);
+            $queues = json_decode(
+                $this->client->get("https://static.developer.riotgames.com/docs/lol/queues.json")->getBody(
+                )->getContents(),
+                true
+            );
             Cache::add('lol-queues', $queues, 3600);
         }
         return $queues;
@@ -379,8 +469,12 @@ class RiotApi
     {
         $spells = Cache::get('lol-spells');
         if (!$spells) {
-            $spells = json_decode($this->client->get("https://ddragon.leagueoflegends.com/cdn/11.19.1/data/en_US/summoner.json")->getBody()->getContents(),
-                true);
+            $spells = json_decode(
+                $this->client->get(
+                    "https://ddragon.leagueoflegends.com/cdn/{$this->getCurrentPatch()}/data/en_US/summoner.json"
+                )->getBody()->getContents(),
+                true
+            );
             Cache::add('lol-spells', $spells, 3600);
         }
         return $spells;

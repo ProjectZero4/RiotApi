@@ -44,12 +44,12 @@ use ProjectZero4\RiotApi\Endpoints\Summoner;
 }
 
 /**
- * @param int $spellId
+ * @param string $spellId
  * @return string
  */
-#[Pure] function spellUrl(int $spellId): string
+#[Pure] function spellUrl(string $spellId): string
 {
-    return iconPath("spells/{$spellId}.png");
+    return "https://ddragon.leagueoflegends.com/cdn/" . app(RiotApi::class)->getCurrentPatch() . "/img/spell/$spellId.png";
 }
 
 /**
@@ -59,13 +59,16 @@ use ProjectZero4\RiotApi\Endpoints\Summoner;
 #[Pure] function perkUrl(int $perkId): string
 {
     $perkFilename = match($perkId) {
-        7200 => '7200_Domination',
         7201 => '7201_Precision',
         7202 => '7202_Whimsy',
         7204 => '7204_Resolve',
         default => '7200_Domination',
-
     };
 
     return iconPath("perk/Styles/{$perkFilename}.png");
+}
+
+function riotApi(): RiotApi
+{
+    return app(RiotApi::class);
 }

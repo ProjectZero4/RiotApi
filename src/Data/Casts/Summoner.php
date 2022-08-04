@@ -7,7 +7,7 @@ use Spatie\LaravelData\Support\DataProperty;
 
 class Summoner implements Cast
 {
-    public function cast(DataProperty $property, mixed $value): \ProjectZero4\RiotApi\Models\Summoner
+    public function cast(DataProperty $property, mixed $value, array $context): \ProjectZero4\RiotApi\Models\Summoner
     {
         /** @var RiotApi $api */
         $api = app(RiotApi::class);

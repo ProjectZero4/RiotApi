@@ -7,8 +7,6 @@ use ProjectZero4\RiotApi\Models\Cacheable;
 
 class RiotApiCollection extends Collection
 {
-
-
     public function isOutdated(): bool
     {
         $renewCache = false;
@@ -26,4 +24,6 @@ class RiotApiCollection extends Collection
         }
         return $renewCache;
     }
+
+    public function mapForDto() {}
 }

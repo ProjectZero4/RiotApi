@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Artisan;
+use ProjectZero4\RiotApi\Data\Spectator\ActiveGame;
 use ProjectZero4\RiotApi\Data\Spectator\FeaturedGames;
 use ProjectZero4\RiotApi\Endpoints\Spectator;
 use ProjectZero4\RiotApi\Endpoints\Status;
@@ -157,7 +158,6 @@ class RiotApi
         $response = $this->summoner->bySummonerName($summonerName);
         $summonerModel->fill($response)->save();
         $this->leagueBySummoner($summonerModel);
-        Artisan::queue('riotApi:games', ["--summonerName", "$summonerModel->nameKey"]);
         return $summonerModel;
     }
 
@@ -478,5 +478,19 @@ class RiotApi
             Cache::add('lol-spells', $spells, 3600);
         }
         return $spells;
+    }
+
+    public function processLiveGameStats(ActiveGame $liveGame)
+    {
+        foreach ($liveGame->participants as $participant) {
+            $latestGame = $participant->summoner->recentGames()->first();
+            if ($latestGame->created_at->gt(Carbon::now()->subHours(2))) {
+                continue;
+            }
+
+            Artisan::call("riotApi:games", [
+                '--summonerName' => $participant->summoner->name,
+            ]);
+        }
     }
 }

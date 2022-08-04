@@ -10,15 +10,13 @@ class RiotApiServiceProvider extends ServiceProvider
 {
     public function boot()
     {
-        if ($this->app->runningInConsole()) {
-            $this->commands([
-                Commands\Champions::class,
-                Commands\Maps::class,
-                Commands\Queues::class,
-                Commands\Games::class,
-                Commands\Fresh::class,
-            ]);
-        }
+        $this->commands([
+            Commands\Champions::class,
+            Commands\Maps::class,
+            Commands\Queues::class,
+            Commands\Games::class,
+            Commands\Fresh::class,
+        ]);
 
         $this->loadMigrationsFrom(__DIR__ . '/database/migrations');
         $this->app->singleton(RiotApi::class, function ($app) {

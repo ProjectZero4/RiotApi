@@ -2,14 +2,16 @@
 
 namespace ProjectZero4\RiotApi\Data\Spectator;
 
+use ProjectZero4\RiotApi\Data\Casts\CollectionCast;
+use ProjectZero4\RiotApi\RiotApiCollection;
+use Spatie\LaravelData\Attributes\WithCast;
 use Spatie\LaravelData\Data;
-use Spatie\LaravelData\DataCollection;
 
 class FeaturedGames extends Data
 {
     public function __construct(
-        /** @var DataCollection<ActiveGame> */
-        public DataCollection $gameList,
+        #[WithCast(CollectionCast::class, ActiveGame::class)]
+        public RiotApiCollection $gameList,
         public int $clientRefreshInterval
     ) {}
 }

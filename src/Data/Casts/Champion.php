@@ -7,7 +7,7 @@ use Spatie\LaravelData\Support\DataProperty;
 
 class Champion implements Cast
 {
-    public function cast(DataProperty $property, mixed $value): \ProjectZero4\RiotApi\Models\Champion
+    public function cast(DataProperty $property, mixed $value, array $context): \ProjectZero4\RiotApi\Models\Champion
     {
         /** @var RiotApi $api */
         $api = app(RiotApi::class);

@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Query\JoinClause;
+use Illuminate\Support\Facades\DB;
+use ProjectZero4\RiotApi\Data\ParticipantAggregate;
 use ProjectZero4\RiotApi\Models\Base;
 use ProjectZero4\RiotApi\Models\Game\Game;
 use ProjectZero4\RiotApi\Models\Game\Participant;
@@ -113,7 +115,7 @@ class Summoner extends Base
 
     public function participants(): HasMany
     {
-        return $this->hasMany(Participant::class, 'summonerId', 'game_id');
+        return $this->hasMany(Participant::class, 'summonerId', 'id');
     }
 
     public function getLastSeenAttribute(): ?Carbon
@@ -151,5 +153,19 @@ class Summoner extends Base
     public static function fromName(string $summonerName): ?Summoner
     {
         return Summoner::where('nameKey', Summoner::convertSummonerNameToKey($summonerName))->first();
+    }
+
+    public function championAggregate(Champion $champion): ParticipantAggregate
+    {
+        return ParticipantAggregate::from($this->participants()
+            ->where('championId', $champion->key)
+            ->select([
+                DB::raw("avg(assists) as assists"),
+                DB::raw("avg(deaths) as deaths"),
+                DB::raw("avg(kills) as kills"),
+                DB::raw("count(*) as games"),
+                DB::raw("sum(win) as wins"),
+            ])
+            ->first());
     }
 }

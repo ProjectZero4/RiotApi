@@ -8,12 +8,13 @@ use Spatie\LaravelData\Support\DataProperty;
 class CollectionCast implements Cast
 {
 
-    public function cast(DataProperty $property, mixed $value): mixed
+    public function cast(DataProperty $property, mixed $value, array $context): mixed
     {
-        $type = $property->castAttribute()->arguments[0];
-        $class = $property->types()->first();
-        return new $class(array_map(function ($item) use ($type) {
+        $type = $property->attributes->first()->arguments[0];
+        $class = array_keys($property->type->acceptedTypes)[0];
+        $items = array_map(function ($item) use ($type) {
             return $type::from($item);
-        }, $value));
+        }, $value);
+        return new $class($items);
     }
 }

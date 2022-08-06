@@ -30,9 +30,10 @@ use ProjectZero4\RiotApi\Endpoints\Summoner;
  * @param string $path
  * @return string
  */
-#[Pure] function iconPath(string $path = ""): string
+function iconPath(string $path = ""): string
 {
-    return imagesPath("icons/{$path}");
+    $version = riotApi()->getCurrentPatch();
+    return "https://ddragon.leagueoflegends.com/cdn/$version/img/$path";
 }
 /**
  * @param string $path
@@ -40,7 +41,7 @@ use ProjectZero4\RiotApi\Endpoints\Summoner;
  */
 #[Pure] function championPath(string $path = ""): string
 {
-    return imagesPath("champion/{$path}");
+    return "https://ddragon.leagueoflegends.com/cdn/img/champion/$path";
 }
 
 /**

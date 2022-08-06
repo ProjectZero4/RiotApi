@@ -7,6 +7,7 @@ namespace ProjectZero4\RiotApi\Models;
 use Illuminate\Database\Eloquent\Model;
 use JetBrains\PhpStorm\Pure;
 use function ProjectZero4\RiotApi\championPath;
+use function ProjectZero4\RiotApi\riotApi;
 
 /**
  * Class Champion
@@ -52,7 +53,8 @@ class Champion extends Base
 
     #[Pure] public function iconUrl(): string
     {
-        return championPath("icon/{$this->id}.png");
+        $version = riotApi()->getCurrentPatch();
+        return "https://ddragon.leagueoflegends.com/cdn/$version/img/champion/$this->id.png";
     }
 
     #[Pure] public function getDefaultLoadingUrlAttribute(): string

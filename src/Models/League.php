@@ -7,6 +7,7 @@ namespace ProjectZero4\RiotApi\Models;
 use Illuminate\Database\Eloquent\Builder;
 use JetBrains\PhpStorm\Pure;
 use function ProjectZero4\RiotApi\iconPath;
+use function ProjectZero4\RiotApi\imagesPath;
 
 
 /**
@@ -93,7 +94,7 @@ class League extends Base
         $tier = strtolower($tier);
         $rank = strtolower($rank);
 
-        return iconPath("tier/{$tier}_{$rank}.png");
+        return imagesPath("icons/tier/{$tier}_$rank.png");
     }
 
     #[Pure] public function iconUrl(): string

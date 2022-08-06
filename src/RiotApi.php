@@ -260,7 +260,7 @@ class RiotApi
             }
             Cache::put('featuredGames', $featuredGames);
         }
-        $featuredGames['gameList'] = [$featuredGames['gameList'][0]];
+
         return FeaturedGames::from($featuredGames);
     }
 
@@ -484,7 +484,7 @@ class RiotApi
     {
         foreach ($liveGame->participants as $participant) {
             $latestGame = $participant->summoner->recentGames()->first();
-            if ($latestGame->created_at->gt(Carbon::now()->subHours(2))) {
+            if (!$latestGame || ($latestGame->created_at && $latestGame->created_at->gt(Carbon::now()->subHours(2)))) {
                 continue;
             }
 

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Facades\DB;
+use ProjectZero4\RiotApi\Data\Game\Participant as ParticipantDto;
 use ProjectZero4\RiotApi\Data\ParticipantAggregate;
 use ProjectZero4\RiotApi\Models\Base;
 use ProjectZero4\RiotApi\Models\Game\Game;
@@ -17,6 +18,7 @@ use ProjectZero4\RiotApi\RiotApiCollection;
 use Illuminate\Support\Collection;
 use JetBrains\PhpStorm\Pure;
 use function ProjectZero4\RiotApi\iconPath;
+use function ProjectZero4\RiotApi\riotApi;
 
 /**
  * Class Summoner
@@ -81,7 +83,7 @@ class Summoner extends Base
 
     #[Pure] public function iconUrl(): string
     {
-        return iconPath("profile/{$this->profileIconId}.png");
+        return iconPath("profileicon/{$this->profileIconId}.png");
     }
 
     public function masteries(): HasMany
@@ -131,13 +133,9 @@ class Summoner extends Base
         return $this->games()->with('participants')->latest('gameCreation')->limit(1)->first();
     }
 
-    public function lastGameParticipant(): Participant
+    public function lastGameParticipant(): ParticipantDto
     {
-        if ($lastGame = $this->lastGame()) {
-            return $lastGame->participantBySummoner($this);
-        }
-
-        return new Participant();
+        return $this->lastGame()->participantBySummoner($this);
     }
 
     public function getSoloQAttribute(): ?League
@@ -167,5 +165,18 @@ class Summoner extends Base
                 DB::raw("sum(win) as wins"),
             ])
             ->first());
+    }
+
+    public function getPersonalSplashUrl(): string
+    {
+        if ($this->participants()->count() > 0 && ($lastGameSplash = $this->lastGameParticipant()->champion?->splashUrl())) {
+            return $lastGameSplash;
+        }
+
+        if ($mastery = riotApi()->masteryBySummoner($this)->first()) {
+            return $mastery->champion->splashUrl();
+        }
+
+        return Champion::whereId('Yasuo')->first()->splashUrl();
     }
 }

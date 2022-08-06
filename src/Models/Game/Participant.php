@@ -234,6 +234,11 @@ class Participant extends GameBase
         'rune_page_id',
     ];
 
+    protected $casts = [
+        'created_at' => 'datetime:Y-m-d\TH:i:sP',
+        'updated_at' => 'datetime:Y-m-d\TH:i:sP',
+    ];
+
     protected function convertAttributes(array $attributes): array
     {
         unset($attributes['teamId'], $attributes['perks'], $attributes['participantId']);
@@ -258,15 +263,5 @@ class Participant extends GameBase
     public function champion()
     {
         return $this->belongsTo(Champion::class, 'championId', 'key');
-    }
-
-    #[Pure] public function itemUrl(int $itemIndex): string
-    {
-        return iconPath("item/{$this->{"item$itemIndex"}}.png");
-    }
-
-    #[Pure] public function spellUrl(int $spellIndex): string
-    {
-        return iconPath("spell/{$this->{"summoner{$spellIndex}Id"}}.png");
     }
 }

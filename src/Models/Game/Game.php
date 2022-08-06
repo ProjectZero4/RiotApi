@@ -3,8 +3,10 @@
 
 namespace ProjectZero4\RiotApi\Models\Game;
 
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
+use ProjectZero4\RiotApi\Data\Game\Participant as ParticipantDto;
 use ProjectZero4\RiotApi\Models\Summoner as SummonerModel;
 use ProjectZero4\RiotApi\RiotApiCollection;
 
@@ -77,8 +79,9 @@ class Game extends GameBase
         return $this->hasMany(Team::class);
     }
 
-    public function participantBySummoner(SummonerModel $summoner): Participant
+    public function participantBySummoner(SummonerModel $summoner): ParticipantDto
     {
-        return $participant = $this->participants()->where('summonerId', $summoner->id)->first();
+        $participant = $this->participants()->where('summonerId', $summoner->id)->first();
+        return ParticipantDto::from($participant->toArray());
     }
 }

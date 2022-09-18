@@ -16,6 +16,7 @@ class RiotApiServiceProvider extends ServiceProvider
             Commands\Queues::class,
             Commands\Games::class,
             Commands\Fresh::class,
+            Commands\Setup::class,
         ]);
 
         $this->loadMigrationsFrom(__DIR__ . '/database/migrations');

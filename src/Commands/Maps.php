@@ -13,7 +13,7 @@ class Maps extends Command
      *
      * @var string
      */
-    protected $signature = 'riotApi:maps';
+    protected $signature = 'riot-api:maps';
 
     /**
      * The console command description.

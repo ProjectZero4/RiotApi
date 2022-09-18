@@ -15,7 +15,7 @@ class Champions extends Command
      *
      * @var string
      */
-    protected $signature = 'riotApi:champions';
+    protected $signature = 'riot-api:champions';
 
     /**
      * The console command description.

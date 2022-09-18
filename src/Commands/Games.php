@@ -17,7 +17,7 @@ class Games extends Command
      *
      * @var string
      */
-    protected $signature = 'riotApi:games {--summonerName=}';
+    protected $signature = 'riot-api:games {--summonerName=}';
 
     /**
      * The console command description.

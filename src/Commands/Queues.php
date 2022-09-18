@@ -14,7 +14,7 @@ class Queues extends Command
      *
      * @var string
      */
-    protected $signature = 'riotApi:queues';
+    protected $signature = 'riot-api:queues';
 
     /**
      * The console command description.

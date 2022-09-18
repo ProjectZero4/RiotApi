@@ -14,36 +14,17 @@ class Status extends Command
      *
      * @var string
      */
-    protected $signature = 'riotApi:fresh';
+    protected $signature = 'riot-api:status';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Truncate all the riot api databases';
-
-    protected array $tables = [
-        'champion_masteries',
-        'champions',
-        'games',
-        'leagues',
-        'maps',
-        'participants',
-        'queues',
-        'rune_pages',
-        'summoners',
-        'teams',
-    ];
+    protected $description = 'Checks that everything is setup and ready to use';
 
     public function handle()
     {
-        $stmts = [];
-        foreach ($this->tables as $table) {
-            $stmts[] = "truncate $table";
-        }
-        echo implode(';', $stmts);
-        DB::select(implode(';', $stmts));
     }
 }
 

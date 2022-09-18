@@ -488,7 +488,7 @@ class RiotApi
                 continue;
             }
 
-            Artisan::call("riotApi:games", [
+            Artisan::call("riot-api:games", [
                 '--summonerName' => $participant->summoner->name,
             ]);
         }

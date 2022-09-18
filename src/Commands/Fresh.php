@@ -4,8 +4,9 @@
 namespace ProjectZero4\RiotApi\Commands;
 
 
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Console\Command;
+use ProjectZero4\RiotApi\Models;
 
 class Fresh extends Command
 {
@@ -14,7 +15,7 @@ class Fresh extends Command
      *
      * @var string
      */
-    protected $signature = 'riotApi:fresh';
+    protected $signature = 'riot-api:fresh';
 
     /**
      * The console command description.
@@ -23,27 +24,27 @@ class Fresh extends Command
      */
     protected $description = 'Truncate all the riot api databases';
 
-    protected array $tables = [
-        'champion_masteries',
-        'champions',
-        'games',
-        'leagues',
-        'maps',
-        'participants',
-        'queues',
-        'rune_pages',
-        'summoners',
-        'teams',
+    protected array $models = [
+        Models\ChampionMastery::class,
+        Models\Champion::class,
+        Models\Game\Game::class,
+        Models\League::class,
+        Models\Game\Map::class,
+        Models\Game\Participant::class,
+        Models\Game\Queue::class,
+        Models\Game\RunePage::class,
+        Models\Summoner::class,
+        Models\Game\Team::class,
     ];
 
     public function handle()
     {
-        $stmts = [];
-        foreach ($this->tables as $table) {
-            $stmts[] = "truncate $table";
+        foreach ($this->models as $model) {
+            /** @var Model $model */
+            $model::query()->truncate();
         }
-        echo implode(';', $stmts);
-        DB::select(implode(';', $stmts));
+
+        $this->call(Setup::class);
     }
 }
 
